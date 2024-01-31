@@ -1,11 +1,9 @@
-import { Header } from "@/components/header";
 import { ThemeProvider } from "@/providers/theme-provider";
 import ToastProvider from "@/providers/toast-provider";
-import { clsx } from "clsx";
 import type { Metadata } from "next";
+import { SessionProvider } from "next-auth/react";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Footer from "@/components/footer";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,12 +19,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={clsx(inter.className, "min-h-screen flex flex-col")}>
+      <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <ToastProvider />
-          <Header />
-          <div className="flex-1">{children}</div>
-          <Footer />
+          <SessionProvider>{children}</SessionProvider>
         </ThemeProvider>
       </body>
     </html>
