@@ -1,7 +1,6 @@
 import { ThemeProvider } from "@/providers/theme-provider";
 import ToastProvider from "@/providers/toast-provider";
 import type { Metadata } from "next";
-import { SessionProvider } from "next-auth/react";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -19,10 +18,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body suppressHydrationWarning={true} className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <ToastProvider />
-          <SessionProvider>{children}</SessionProvider>
+          {children}
         </ThemeProvider>
       </body>
     </html>

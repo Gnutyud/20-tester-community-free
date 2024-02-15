@@ -15,3 +15,21 @@ export default function SigninWithGoogle() {
     </Button>
   );
 }
+// import { AuthError } from "next-auth"
+// import { signIn } from "../auth"
+
+// export default function SigninWithGoogle() {
+//  return (
+//    <form action={async (formData) => {
+//      "use server"
+//      try {
+//        await signIn("credentials", formData)
+//     } catch(error) {
+//       if (error instanceof AuthError) // Handle auth errors
+//       throw error // Rethrow all other errors
+//     }
+//    }}>
+//     <button>Sign in</button>
+//   </form>
+//  )
+// }

@@ -5,13 +5,13 @@ import Sidebar from "@/components/sidebar";
 import { Container } from "@/components/ui/container";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GroupItem } from "@/types";
-import { useSession } from "next-auth/react";
+// import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 
 export default function Home() {
   const notify = () => toast("Here is your toast.");
-  const { data: session } = useSession();
-  console.log("session", session);
+  // const { data: session } = useSession();
+  // console.log("session", session);
   const groupData: GroupItem[] = [
     {
       id: 1,
