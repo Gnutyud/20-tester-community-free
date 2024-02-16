@@ -1,6 +1,8 @@
+import { auth } from '@/auth';
 import { ThemeProvider } from "@/providers/theme-provider";
 import ToastProvider from "@/providers/toast-provider";
 import type { Metadata } from "next";
+import { SessionProvider } from 'next-auth/react';
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -11,12 +13,14 @@ export const metadata: Metadata = {
   description: "Pass 20 tester Google Play Console required by our community",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth();
   return (
+    <SessionProvider session={session}>
     <html lang="en">
       <body suppressHydrationWarning={true} className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
@@ -25,5 +29,6 @@ export default function RootLayout({
         </ThemeProvider>
       </body>
     </html>
+    </SessionProvider>
   );
 }

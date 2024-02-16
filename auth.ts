@@ -1,11 +1,11 @@
-import NextAuth from "next-auth"
-import { UserRole } from "@prisma/client";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import { UserRole } from "@prisma/client";
+import NextAuth from "next-auth";
 
-import { db } from "@/lib/db";
 import authConfig from "@/auth.config";
-import { getUserById } from "@/data/user";
 import { getTwoFactorConfirmationByUserId } from "@/data/two-factor-confirmation";
+import { getUserById } from "@/data/user";
+import { db } from "@/lib/db";
 import { getAccountByUserId } from "./data/account";
 
 export const {
@@ -13,7 +13,7 @@ export const {
   auth,
   signIn,
   signOut,
-  update,
+  // update,
 } = NextAuth({
   pages: {
     signIn: "/auth/login",
@@ -32,7 +32,7 @@ export const {
       // Allow OAuth without email verification
       if (account?.provider !== "credentials") return true;
 
-      const existingUser = await getUserById(user.id);
+      const existingUser = await getUserById(user?.id || "");
 
       // Prevent sign in without email verification
       if (!existingUser?.emailVerified) return false;
@@ -50,7 +50,7 @@ export const {
 
       return true;
     },
-    async session({ token, session }) {
+    async session({ token, session }: any) {
       if (token.sub && session.user) {
         session.user.id = token.sub;
       }
@@ -91,7 +91,7 @@ export const {
       return token;
     }
   },
-  adapter: PrismaAdapter(db),
+  adapter: PrismaAdapter(db) as any,
   session: { strategy: "jwt" },
   ...authConfig,
 });
