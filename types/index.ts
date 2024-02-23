@@ -1,4 +1,9 @@
-export type StatusTypes = "open" | "become a tester" | "inprogress" | "complete";
+export enum StatusTypes {
+  OPEN = "OPEN",
+  PENDING = "PENDING",
+  INPROGRESS = "INPROGRESS",
+  COMPLETE = "COMPLETE",
+}
 
 export interface GroupItem {
   id: number;

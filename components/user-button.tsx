@@ -19,7 +19,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { Mail, MessageSquare, Plus, Settings, User, UserPlus, Users } from "lucide-react";
+import { Mail, MessageSquare, Plus, Settings, User, UserPlus, Users, Key } from "lucide-react";
+import Link from "next/link";
+import { UserRole } from "@prisma/client";
 
 export const UserButton = () => {
   const user = useCurrentUser();
@@ -38,13 +40,19 @@ export const UserButton = () => {
         <DropdownMenuLabel>{user?.name || user?.email}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
+          {user?.role === UserRole.ADMIN && (
+            <DropdownMenuItem>
+              <Key className="mr-2 h-4 w-4" />
+              <Link href="/admin">Admin</Link>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem>
             <User className="mr-2 h-4 w-4" />
-            <span>Profile</span>
+            <Link href="/profile">Profile</Link>
           </DropdownMenuItem>
           <DropdownMenuItem>
             <Settings className="mr-2 h-4 w-4" />
-            <span>Settings</span>
+            <Link href="/settings">Settings</Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

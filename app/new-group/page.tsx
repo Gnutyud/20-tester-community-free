@@ -4,37 +4,45 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { createNewGroup } from "@/actions/create-new-group";
+import { FormError } from "@/components/form-error";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Container } from "@/components/ui/container";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import Link from "next/link";
-
-const formSchema = z.object({
-  username: z.string().min(2, {
-    message: "Username must be at least 2 characters.",
-  }),
-  maxMembers: z.number().min(5, {
-    message: "Max members must be at least 5.",
-  }),
-  email: z.string().email({
-    message: "Invalid email.",
-  }),
-});
+import { NewGroupSchema } from "@/schemas";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 
 function NewGroup() {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | undefined>("");
+  const router = useRouter();
+
+  const form = useForm<z.infer<typeof NewGroupSchema>>({
+    resolver: zodResolver(NewGroupSchema),
     defaultValues: {
-      username: "",
-      maxMembers: 5,
-      email: "",
+      maxMembers: 20,
     },
   });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
+  const onSubmit = (values: z.infer<typeof NewGroupSchema>) => {
     console.log(values);
+    startTransition(() => {
+      createNewGroup(values)
+        .then((data) => {
+          if (data?.error) {
+            form.reset();
+            setError(data.error);
+          }
+
+          if (data?.success) {
+            form.reset();
+            router.push("/");
+          }
+        })
+        .catch(() => setError("Something went wrong"));
+    });
   };
 
   return (
@@ -45,43 +53,28 @@ function NewGroup() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <FormField
               control={form.control}
-              name="username"
+              name="maxMembers"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Username</FormLabel>
-                  <FormControl>
-                    <Input placeholder="shadcn" {...field} />
-                  </FormControl>
-                  <FormDescription>This is your public display name.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormLabel>Max Members</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value.toString()} disabled={isPending}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a verified email to display" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="m@example.com">m@example.com</SelectItem>
-                      <SelectItem value="m@google.com">m@google.com</SelectItem>
-                      <SelectItem value="m@support.com">m@support.com</SelectItem>
+                      <SelectItem value="5">5</SelectItem>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="15">15</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
                     </SelectContent>
                   </Select>
-                  <FormDescription>
-                    You can manage email addresses in your <Link href="/examples/forms">email settings</Link>.
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
+            <FormError message={error} />
             <Button type="submit">Submit</Button>
           </form>
         </Form>
