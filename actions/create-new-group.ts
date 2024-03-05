@@ -5,6 +5,7 @@ import * as z from "zod";
 import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { NewGroupSchema } from "@/schemas";
+import { joinGroup } from "@/data/group";
 
 export const createNewGroup = async (values: z.infer<typeof NewGroupSchema>) => {
   const validatedFields = NewGroupSchema.safeParse(values);
@@ -13,15 +14,15 @@ export const createNewGroup = async (values: z.infer<typeof NewGroupSchema>) => 
     return { error: "Invalid fields!" };
   }
 
-  const { maxMembers } = validatedFields.data;
+  const { maxMembers, appId } = validatedFields.data;
 
   const user = await currentUser();
 
   // Create the group in the database
-  const createdGroup = await db.group.create({
+  const newGroup = await db.group.create({
     data: {
       maxMembers,
-      user: { connect: { id: user?.id } }, // Connect the group to the user who created it
+      users: { connect: { id: user?.id } }, // Connect the group to the user who created it
     },
   });
 
@@ -29,9 +30,12 @@ export const createNewGroup = async (values: z.infer<typeof NewGroupSchema>) => 
   await db.groupUser.create({
     data: {
       user: { connect: { id: user?.id } },
-      group: { connect: { id: createdGroup.id } },
+      group: { connect: { id: newGroup.id } },
     },
   });
+
+  // Add the selected app to the group
+  await joinGroup(appId, newGroup.id);
 
   return { success: "Create new group success!" };
 };

@@ -12,12 +12,22 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { NewGroupSchema } from "@/schemas";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 function NewGroup() {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | undefined>("");
   const router = useRouter();
+  const [apps, setApps] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchGroupData = async () => {
+      const data = await fetch("/api/app");
+      const response = await data.json();
+      setApps(response);
+    };
+    fetchGroupData();
+  }, []);
 
   const form = useForm<z.infer<typeof NewGroupSchema>>({
     resolver: zodResolver(NewGroupSchema),
@@ -64,10 +74,35 @@ function NewGroup() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                      <SelectItem value="2">2</SelectItem>
                       <SelectItem value="5">5</SelectItem>
                       <SelectItem value="10">10</SelectItem>
                       <SelectItem value="15">15</SelectItem>
                       <SelectItem value="20">20</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="appId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Your app</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value?.toString()} disabled={isPending}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your app to join this group" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {apps.map((app) => (
+                        <SelectItem key={app.id} value={app.id.toString()}>
+                          {app.appName}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />

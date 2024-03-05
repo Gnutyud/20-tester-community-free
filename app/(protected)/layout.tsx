@@ -5,7 +5,13 @@ interface ProtectedLayoutProps {
 }
 
 const ProtectedLayout = ({ children }: ProtectedLayoutProps) => {
-  return <AppLayout><div className="w-full min-h-screen flex justify-center items-center">{children}</div></AppLayout>;
+  return (
+    <AppLayout>
+      <div className="flex justify-center">
+        <div className="lg:max-w-5xl lg:w-full">{children}</div>
+      </div>
+    </AppLayout>
+  );
 };
 
 export default ProtectedLayout;

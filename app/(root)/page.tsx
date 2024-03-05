@@ -48,7 +48,7 @@ export default function Home() {
                       id={group.id}
                       maxMembers={group.maxMembers}
                       status={group.status as any}
-                      members={group.members}
+                      users={group.users}
                       becameTesterNumber={group.becameTesterNumber}
                       startedTestDate={group.startedTestDate}
                     />
@@ -63,7 +63,7 @@ export default function Home() {
                       id={group.id}
                       maxMembers={group.maxMembers}
                       status={group.status as any}
-                      members={group.members}
+                      users={group.users}
                       becameTesterNumber={group.becameTesterNumber}
                       startedTestDate={group.startedTestDate}
                     />
@@ -78,7 +78,7 @@ export default function Home() {
                       id={group.id}
                       maxMembers={group.maxMembers}
                       status={group.status as any}
-                      members={group.members}
+                      users={group.users}
                       becameTesterNumber={group.becameTesterNumber}
                       startedTestDate={group.startedTestDate}
                     />

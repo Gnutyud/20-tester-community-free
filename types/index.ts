@@ -9,7 +9,7 @@ export interface GroupItem {
   id: number;
   maxMembers: number;
   status: StatusTypes;
-  members: string[];
+  users: string[];
   becameTesterNumber: number;
   startedTestDate: string | null;
 }

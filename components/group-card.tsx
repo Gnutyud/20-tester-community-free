@@ -67,7 +67,7 @@ const StepListing = ({
   );
 };
 
-const GroupCard = ({ id, maxMembers, status, members, becameTesterNumber, startedTestDate }: GroupCardProps) => {
+const GroupCard = ({ id, maxMembers, status, users, becameTesterNumber, startedTestDate }: GroupCardProps) => {
   const numberOfDaysInTest = startedTestDate ? dayjs().diff(dayjs(startedTestDate), "day") : 0;
   const curentUser = useCurrentUser();
   const router = useRouter();
@@ -122,9 +122,9 @@ const GroupCard = ({ id, maxMembers, status, members, becameTesterNumber, starte
       <ul role="list" className="space-y-5 my-7">
         <StepListing
           title={`${maxMembers} team members ${
-            status === StatusTypes.OPEN ? `(currently ${members.length || 0}/${maxMembers})` : ""
+            status === StatusTypes.OPEN ? `(currently ${users.length || 0}/${maxMembers})` : ""
           }`}
-          isComplete={members.length === maxMembers}
+          isComplete={users.length === maxMembers}
           isCurrentStep={status === StatusTypes.OPEN}
         />
         <StepListing
@@ -145,7 +145,7 @@ const GroupCard = ({ id, maxMembers, status, members, becameTesterNumber, starte
         />
       </ul>
       {!curentUser ||
-        (curentUser && !members.includes(curentUser.email!) && (
+        (curentUser && !users.includes(curentUser.email!) && (
           <Button
             disabled={status !== StatusTypes.OPEN}
             onClick={handleJoinGroup}
@@ -169,7 +169,7 @@ const GroupCard = ({ id, maxMembers, status, members, becameTesterNumber, starte
             </svg>
           </Button>
         ))}
-      {curentUser && members.includes(curentUser.email!) && (
+      {curentUser && users.includes(curentUser.email!) && (
         <Button
           onClick={handleViewGroup}
           className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"

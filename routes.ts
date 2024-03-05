@@ -5,7 +5,8 @@
  */
 export const publicRoutes = [
     "/",
-    "/auth/new-verification"
+    "/auth/new-verification",
+    "/api/group"
   ];
   
   /**
@@ -32,4 +33,4 @@ export const publicRoutes = [
    * The default redirect path after logging in
    * @type {string}
    */
-  export const DEFAULT_LOGIN_REDIRECT = "/";
+  export const DEFAULT_LOGIN_REDIRECT = "/app";

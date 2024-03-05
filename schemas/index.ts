@@ -73,7 +73,20 @@ export const RegisterSchema = z.object({
 });
 
 export const NewGroupSchema = z.object({
-  maxMembers: z.coerce.number().int().min(5, {
-    message: "Minimum of 5 member required",
+  maxMembers: z.coerce.number().int().min(2, {
+    message: "Minimum of 2 member required",
+  }),
+  appId: z.coerce.number().int(),
+});
+
+export const NewAppSchema = z.object({
+  appName: z.string().min(1, {
+    message: "App name is required",
+  }),
+  packageName: z.string().min(1, {
+    message: "Package name is required",
+  }),
+  installUrl: z.string().url({
+    message: "URL is required",
   }),
 });

@@ -21,6 +21,12 @@ enum StatusTypes {
   COMPLETE
 }
 
+enum RequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
 model User {
   id                    String                 @id @default(cuid())
   name                  String?
@@ -32,10 +38,12 @@ model User {
   accounts              Account[]
   isTwoFactorEnabled    Boolean                @default(false)
   twoFactorConfirmation TwoFactorConfirmation?
-  notifications         Notification[]
   apps                  App[]
-  groups                GroupUser[]
-  Group                 Group[]
+  groups                Group[]                @relation("GroupUsers")
+  requests              Request[]              @relation("RequestedUser")
+  Notification          Notification[]
+  GroupUser             GroupUser[]
+  Request               Request[]
 }
 
 model Account {
@@ -94,43 +102,63 @@ model TwoFactorConfirmation {
 }
 
 model Notification {
-  id        Int      @id @default(autoincrement())
-  message   String
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  groupId   Int
-  group     Group    @relation(fields: [groupId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id      Int    @id @default(autoincrement())
+  groupId Int
+  userId  String
+  message String
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model App {
-  id        Int      @id @default(autoincrement())
-  name      String
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          Int         @id @default(autoincrement())
+  userId      String
+  packageName String
+  appName     String
+  installUrl  String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  groups      Group[]     @relation("GroupApps")
+  GroupApps   GroupApps[]
 }
 
 model Group {
-  id                 Int            @id @default(autoincrement())
-  userId             String
-  user               User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  members            GroupUser[]
-  maxMembers         Int            @default(20)
-  status             StatusTypes    @default(OPEN)
-  becameTesterNumber Int            @default(0)
-  notifications      Notification[]
-  startedTestDate    DateTime?      
-  createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @updatedAt
+  id              Int            @id @default(autoincrement())
+  maxMembers      Int            @default(20)
+  status          StatusTypes    @default(OPEN)
+  startedTestDate DateTime?
+  users           User[]         @relation("GroupUsers")
+  apps            App[]          @relation("GroupApps")
+  notifications   Notification[]
+  confirmRequests Request[] // Tracks confirmation requests within the group
+  GroupUser       GroupUser[]
+  GroupApps       GroupApps[]
 }
 
 model GroupUser {
   id      Int    @id @default(autoincrement())
-  user    User   @relation(fields: [userId], references: [id])
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId  String
   groupId Int
-  group   Group  @relation(fields: [groupId], references: [id])
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+}
+
+model GroupApps {
+  id      Int   @id @default(autoincrement())
+  groupId Int
+  appId   Int
+  group   Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  app     App   @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, appId])
+}
+
+model Request {
+  id            Int           @id @default(autoincrement())
+  groupId       Int
+  userId        String
+  userRequested String // Corrected type to Int
+  status        RequestStatus @default(PENDING)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group         Group         @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  requestedUser User          @relation("RequestedUser", fields: [userRequested], references: [id], onDelete: Cascade)
 }
