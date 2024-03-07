@@ -1,12 +1,18 @@
-import { checkAndUpdateGroupStatus, getGroupById } from "@/data/group";
+import { checkAndUpdateGroupStatus, getGroupById, joinGroup } from "@/data/group";
 import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: { id: string } }) {
   try {
     const groupId = Number(params.id);
+    const { appId } = await req.json();
     const user = await currentUser();
+
+    if (!appId) {
+      return new NextResponse("App ID missing", { status: 400 });
+    }
+
     if (!user) {
       return NextResponse.json({ meassage: "unauthorized" }, { status: 403 });
     }
@@ -30,6 +36,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         group: { connect: { id: groupId } },
       },
     });
+
+    // Add the selected app to the group
+    await joinGroup(appId, groupId);
 
     // Check and update group status
     await checkAndUpdateGroupStatus(groupId);

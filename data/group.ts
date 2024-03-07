@@ -1,23 +1,32 @@
 import { db } from "@/lib/db";
-import { RequestStatus } from "@prisma/client";
+import { RequestStatus, StatusTypes } from "@prisma/client";
 
 // Function to check and update group status
 export const checkAndUpdateGroupStatus = async (groupId: number): Promise<void> => {
   try {
     const group = await db.group.findUnique({
       where: { id: groupId },
-      include: { users: true }, // Include the members of the group
+      include: {
+        GroupUser: {
+          include: {
+            user: true, // Include the user details
+          },
+        },
+      }, // Include the members of the group
     });
 
     if (!group) return;
 
-    if (group?.users.length >= group.maxMembers) {
+    if (group?.GroupUser.length >= group.maxMembers) {
+      // Update the group status to PENDING (Step 2)
       await db.group.update({
         where: { id: groupId },
         data: {
-          status: "INPROGRESS",
+          status: StatusTypes.PENDING,
         },
       });
+      // send email to all members to start testing each other's apps
+      console.log("implement email notification to all members to start testing each other's apps");
     }
   } catch (error) {
     console.error("Error updating group status:", error);
@@ -111,4 +120,4 @@ export const joinGroup = async (appId: number, groupId: number): Promise<void> =
     // Handle errors
     throw new Error(`Failed to join group: ${error.message}`);
   }
-}
+};
