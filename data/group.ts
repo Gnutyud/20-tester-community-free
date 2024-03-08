@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { sendNotiDoneStep1 } from "@/lib/mail";
 import { RequestStatus, StatusTypes } from "@prisma/client";
 
 // Function to check and update group status
@@ -25,8 +26,22 @@ export const checkAndUpdateGroupStatus = async (groupId: number): Promise<void> 
           status: StatusTypes.PENDING,
         },
       });
+      // push notification to all members to start testing each other's apps
+      const notificationMessage = `Your group test is ready to start the next step. Let's become testers for each other.`;
+      for (const user of group.GroupUser) {
+        // Create a notification for each user in the group
+        await db.notification.create({
+          data: {
+            groupId: groupId,
+            userId: user.user.id,
+            title: "All members are ready to start testing!",
+            message: notificationMessage,
+          },
+        });
+      }
       // send email to all members to start testing each other's apps
-      console.log("implement email notification to all members to start testing each other's apps");
+      const memberEmailList = (group.GroupUser.map((groupUser) => groupUser.user.email || "") || []).toString();
+      await sendNotiDoneStep1(memberEmailList, groupId);
     }
   } catch (error) {
     console.error("Error updating group status:", error);
@@ -66,7 +81,13 @@ export const getGroupById = async (id: number) => {
   try {
     const group = await db.group.findUnique({
       where: { id },
-      include: { users: true }, // Include the members of the group
+      include: {
+        GroupUser: {
+          include: {
+            user: true, // Include the user details
+          },
+        },
+      }, // Include the members of the group
     });
 
     return group;

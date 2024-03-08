@@ -106,6 +106,7 @@ model Notification {
   groupId Int
   userId  String
   message String
+  title   String
   group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
   user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

@@ -24,7 +24,7 @@ export function NoOpenGroupCard() {
       <div className="mt-2 mb-4 text-sm text-gray-800 dark:text-gray-300">{`Let's create a new group and invite your friends to help.`}</div>
       <div className="flex">
         <button
-          onClick={() => router.push("/new-group")}
+          onClick={() => router.push("/group/create")}
           type="button"
           className="text-white bg-gray-700 hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-xs px-3 py-1.5 me-2 text-center inline-flex items-center dark:bg-gray-600 dark:hover:bg-gray-500 dark:focus:ring-gray-800"
         >

@@ -1,6 +1,7 @@
 import { checkAndUpdateGroupStatus, getGroupById, joinGroup } from "@/data/group";
 import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { sendNotiNewMemberJoin } from "@/lib/mail";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
@@ -29,6 +30,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       return NextResponse.json({ error: "User already joined this group!" }, { status: 400 });
     }
 
+    const group = await getGroupById(groupId);
+
     // Add the user as a member of the group
     await db.groupUser.create({
       data: {
@@ -42,6 +45,25 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
     // Check and update group status
     await checkAndUpdateGroupStatus(groupId);
+
+    // Send notification to all members in the group about the new member
+    if (user && group?.GroupUser) {
+      const notificationMessage = `${user.name} has joined the group.`;
+      for (const user of group.GroupUser) {
+        // Create a notification for each user in the group
+        await db.notification.create({
+          data: {
+            groupId: groupId,
+            userId: user.user.id,
+            title: "New member join!",
+            message: notificationMessage,
+          },
+        });
+      }
+      // send email to all group members
+      const memberEmailList = (group.GroupUser.map((groupUser) => groupUser.user.email || "") || []).toString();
+      await sendNotiNewMemberJoin(memberEmailList, user?.name || user?.email || "");
+    }
 
     console.log("User joined the group successfully.");
     return NextResponse.json({ success: "User joined the group successfully!" }, { status: 200 });

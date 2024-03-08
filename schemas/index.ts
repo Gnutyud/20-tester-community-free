@@ -1,6 +1,5 @@
-import * as z from "zod";
 import { UserRole } from "@prisma/client";
-import NewGroup from "./../app/new-group/page";
+import * as z from "zod";
 
 export const SettingsSchema = z
   .object({

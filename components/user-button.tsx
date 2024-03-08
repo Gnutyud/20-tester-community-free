@@ -19,9 +19,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { Mail, MessageSquare, Plus, Settings, User, UserPlus, Users, Key } from "lucide-react";
+import { Mail, MessageSquare, Plus, Settings, User, UserPlus, Users, Key, Bell } from "lucide-react";
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
+import { Badge } from "./ui/badge";
 
 export const UserButton = () => {
   const user = useCurrentUser();
@@ -29,12 +30,17 @@ export const UserButton = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>
-        <Avatar>
-          <AvatarImage src={user?.image || ""} />
-          <AvatarFallback className="bg-sky-500">
-            <FaUser className="text-white" />
-          </AvatarFallback>
-        </Avatar>
+        <div className="relative">
+          <Avatar>
+            <AvatarImage src={user?.image || ""} />
+            <AvatarFallback className="bg-sky-500">
+              <FaUser className="text-white" />
+            </AvatarFallback>
+          </Avatar>
+          <Badge className="absolute -top-2 -right-4" variant="destructive">
+            2
+          </Badge>
+        </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-40" align="end">
         <DropdownMenuLabel>{user?.name || user?.email}</DropdownMenuLabel>
@@ -49,6 +55,15 @@ export const UserButton = () => {
           <DropdownMenuItem>
             <User className="mr-2 h-4 w-4" />
             <Link href="/profile">Profile</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem>
+            <Bell className="mr-2 h-4 w-4" />
+            <div className="relative">
+              <Link href="/notification">Notification</Link>
+              <Badge className="absolute -top-2 -right-7" variant="destructive">
+                2
+              </Badge>
+            </div>
           </DropdownMenuItem>
           <DropdownMenuItem>
             <Settings className="mr-2 h-4 w-4" />

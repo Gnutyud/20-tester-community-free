@@ -41,3 +41,32 @@ export const sendVerificationEmail = async (email: string, token: string) => {
     html: `<p>Click <a href="${confirmLink}">here</a> to confirm email.</p>`,
   });
 };
+
+export const sendNotiNewMemberJoin = async (email: string, memberName: string) => {
+  await transporter.sendMail({
+    from: "20 Tester Community <no-reply@20testercommunity.com>",
+    to: email,
+    subject: "New member join!",
+    html: `<p>${memberName} has joined the group.</p>`,
+  });
+};
+
+export const sendNotiDoneStep1 = async (email: string, groupId: number) => {
+  const groupLink = `${domain}/group/${groupId}`;
+  await transporter.sendMail({
+    from: "20 Tester Community <no-reply@20testercommunity.com>",
+    to: email,
+    subject: "All members are ready to start testing!",
+    html: `<p>Your group test is ready to start the next step. Let's become testers for each other.</p><p>Click <a href="${groupLink}">here</a> to see all the members's app install URLs to help them test the app</p>`,
+  });
+};
+
+export const sendNotiDoneStep2 = async (email: string, groupId: number) => {
+  const groupLink = `${domain}/group/${groupId}`;
+  await transporter.sendMail({
+    from: "20 Tester Community <no-reply@20testercommunity.com>",
+    to: email,
+    subject: "All members are already became testers!",
+    html: `<p>Congratulations! You have almost completed the required 20 tests on Google Play. Just keep testing members's apps every day for 14 days from now.</p><p>Click <a href="${groupLink}">here</a> to see the group status and how many days remain until it is complete.</p>`,
+  });
+};
