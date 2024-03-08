@@ -158,7 +158,7 @@ export default function Home() {
                 <SelectValue placeholder="Select your app to join this group" />
               </SelectTrigger>
               <SelectContent>
-                {apps.map((app) => (
+                {apps?.map((app) => (
                   <SelectItem key={app.id} value={app.id.toString()}>
                     {app.appName}
                   </SelectItem>
