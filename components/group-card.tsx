@@ -75,19 +75,11 @@ const GroupCard = ({ id, maxMembers, status, users, becameTesterNumber, startedT
   const router = useRouter();
 
   const handleJoinGroup = async () => {
+    if(!curentUser) {
+      router.push("/auth/login");
+      return;
+    }
     onJoin && onJoin(id);
-    // try {
-    //   if (!curentUser) {
-    //     router.push("/auth/login");
-    //   } else {
-    //     await fetch(`/api/group/${id}`, {
-    //       method: "POST",
-    //     });
-    //     toast.success("Joined group successfully");
-    //   }
-    // } catch (error) {
-    //   toast.error("Error joining group");
-    // }
   };
 
   const handleViewGroup = () => {
@@ -148,31 +140,30 @@ const GroupCard = ({ id, maxMembers, status, users, becameTesterNumber, startedT
             isCurrentStep={status === StatusTypes.INPROGRESS}
           />
         </ul>
-        {!curentUser ||
-          (curentUser && !users.includes(curentUser.email!) && (
-            <Button
-              disabled={status !== StatusTypes.OPEN}
-              onClick={handleJoinGroup}
-              className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+        {!users.includes(curentUser?.email!) && (
+          <Button
+            disabled={status !== StatusTypes.OPEN}
+            onClick={handleJoinGroup}
+            className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+          >
+            Join now
+            <svg
+              className="rtl:rotate-180 w-3.5 h-3.5 ms-2"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 14 10"
             >
-              Join now
-              <svg
-                className="rtl:rotate-180 w-3.5 h-3.5 ms-2"
-                aria-hidden="true"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 14 10"
-              >
-                <path
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M1 5h12m0 0L9 1m4 4L9 9"
-                />
-              </svg>
-            </Button>
-          ))}
+              <path
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M1 5h12m0 0L9 1m4 4L9 9"
+              />
+            </svg>
+          </Button>
+        )}
         {curentUser && users.includes(curentUser.email!) && (
           <Button
             onClick={handleViewGroup}

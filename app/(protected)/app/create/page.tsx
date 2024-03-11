@@ -41,7 +41,7 @@ function AppCreate() {
 
           if (data?.success) {
             form.reset();
-            router.push("/app");
+            router.push("/");
           }
         })
         .catch(() => setError("Something went wrong"));

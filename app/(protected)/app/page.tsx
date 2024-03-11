@@ -2,6 +2,7 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import axios from "axios";
 import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -13,10 +14,8 @@ export default function MyApps() {
 
   useEffect(() => {
     const fetchGroupData = async () => {
-      const data = await fetch("/api/app");
-      const response = await data.json();
-      console.log(response);
-      setApps(response);
+      const response = await axios.get("/api/app");
+      setApps(response.data);
     };
     fetchGroupData();
   }, []);

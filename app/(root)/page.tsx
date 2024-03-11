@@ -2,6 +2,7 @@
 import GroupCard from "@/components/group-card";
 import { NoOpenGroupCard } from "@/components/no-open-group-card";
 import Sidebar from "@/components/sidebar";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,6 +19,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { GroupItem, StatusTypes } from "@/types";
 import axios from "axios";
+import { AlertTriangle } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -60,6 +63,10 @@ export default function Home() {
   };
 
   const onSelectGroupToJoin = (groupId: number) => {
+    if (apps.length === 0) {
+      toast.error("You need to add an app to join a group");
+      return;
+    }
     setIsOpen(true);
     setGroupId(groupId);
   };
@@ -89,6 +96,19 @@ export default function Home() {
         <Container>
           <section className="grid grid-cols-4 gap-8 py-4">
             <div className="col-span-3">
+              {!apps.length && (
+                <Alert className="mb-4">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>No apps found!</AlertTitle>
+                  <AlertDescription>
+                    You have not added any app please click{" "}
+                    <span className="text-sky-500 text-2xl">
+                      <Link href={"/app/create"}>HERE</Link>
+                    </span>{" "}
+                    to add new app
+                  </AlertDescription>
+                </Alert>
+              )}
               <Tabs defaultValue="open" className="w-full">
                 <TabsList>
                   <TabsTrigger value="open">Open</TabsTrigger>
@@ -118,6 +138,11 @@ export default function Home() {
                 </TabsContent>
                 <TabsContent value="inprogress">
                   <div className="grid grid-cols-1 gap-4">
+                    {inprogressData.length === 0 && (
+                      <div className="flex justify-center items-center">
+                        <NoOpenGroupCard />
+                      </div>
+                    )}
                     {inprogressData.map((group) => (
                       <GroupCard
                         key={group.id}
@@ -133,6 +158,11 @@ export default function Home() {
                 </TabsContent>
                 <TabsContent value="complete">
                   <div className="grid grid-cols-1 gap-4">
+                    {completeData.length === 0 && (
+                      <div className="flex justify-center items-center">
+                        <NoOpenGroupCard />
+                      </div>
+                    )}
                     {completeData.map((group) => (
                       <GroupCard
                         key={group.id}
