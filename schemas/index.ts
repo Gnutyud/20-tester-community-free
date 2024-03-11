@@ -85,7 +85,22 @@ export const NewAppSchema = z.object({
   packageName: z.string().min(1, {
     message: "Package name is required",
   }),
-  installUrl: z.string().url({
-    message: "URL is required",
-  }),
+  installUrl: z.string().refine(
+    (url) => {
+      const regex = /^(https?:\/\/)?(play\.google\.com\/(store\/apps\/details\?id=|apps\/testing\/))([\w.-]+)\/?$/;
+      return regex.test(url);
+    },
+    {
+      message: "Invalid app install URL format",
+    }
+  ),
+  googleGroupUrl: z.string().refine(
+    (url) => {
+      const regex = /^https?:\/\/groups\.google\.com\/g\/[\w-]+\/?$/;
+      return regex.test(url);
+    },
+    {
+      message: "Invalid Google Groups URL format",
+    }
+  ),
 });

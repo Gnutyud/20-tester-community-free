@@ -25,6 +25,7 @@ function AppCreate() {
       appName: "",
       packageName: "",
       installUrl: "",
+      googleGroupUrl: "",
     },
   });
 
@@ -73,7 +74,7 @@ function AppCreate() {
                 <FormItem>
                   <FormLabel>Package name</FormLabel>
                   <FormControl>
-                    <Input placeholder="com...." {...field} />
+                    <Input placeholder="example: com.20testercommunity.myapp" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -92,8 +93,21 @@ function AppCreate() {
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="googleGroupUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Google Group</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Please fill your Google Groups url here" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormError message={error} />
-            <Button type="submit">Submit</Button>
+            <Button type="submit">Add</Button>
           </form>
         </Form>
       </div>

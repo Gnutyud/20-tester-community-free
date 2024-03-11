@@ -13,7 +13,7 @@ export const createNewApp = async (values: z.infer<typeof NewAppSchema>) => {
     return { error: "Invalid fields!" };
   }
 
-  const { appName, packageName, installUrl } = validatedFields.data;
+  const { appName, packageName, installUrl, googleGroupUrl } = validatedFields.data;
 
   const user = await currentUser();
 
@@ -23,6 +23,7 @@ export const createNewApp = async (values: z.infer<typeof NewAppSchema>) => {
       appName,
       packageName,
       installUrl,
+      googleGroupUrl,
       user: { connect: { id: user?.id } }, // Connect the app to the user who created it
     },
   });
