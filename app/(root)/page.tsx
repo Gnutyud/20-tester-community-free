@@ -80,6 +80,7 @@ export default function Home() {
           appId: appId,
         });
         toast.success("Joined group successfully");
+        router.push(`/group/${groupId}`);
       }
       setIsOpen(false);
       setGroupId(null);

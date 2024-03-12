@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { sendNotiDoneStep1 } from "@/lib/mail";
+import { filterUniqueNotificationMessages } from "@/lib/notifications";
 import { RequestStatus, StatusTypes } from "@prisma/client";
 
 // Function to check and update group status
@@ -68,7 +69,14 @@ export const getGroups = async () => {
     // Map over the groups and transform the data to include only necessary information
     const formattedGroups = groupsWithMembers.map((group) => ({
       ...group,
-      users: group.GroupUser.map((groupUser) => groupUser.user.email), // Get email of each user in the group
+      users: group.GroupUser.map((groupUser) => {
+        return {
+          id: groupUser.user.id,
+          email: groupUser.user.email,
+          avatar: groupUser.user.image,
+          name: groupUser.user.name,
+        };
+      }), // Get email of each user in the group
       becameTesterNumber: group.confirmRequests.filter((request) => request.status === RequestStatus.ACCEPTED).length,
     }));
     return formattedGroups;
@@ -82,15 +90,34 @@ export const getGroupById = async (id: number) => {
     const group = await db.group.findUnique({
       where: { id },
       include: {
+        confirmRequests: true, // Include the confirm requests of the group
         GroupUser: {
           include: {
             user: true, // Include the user details
           },
         },
+        notifications: true, // Include the notifications of the group
       }, // Include the members of the group
     });
 
-    return group;
+    if (!group) return null;
+
+    // Map over the groups and transform the data to include only necessary information
+    const formattedGroups = {
+      ...group,
+      users: group.GroupUser.map((groupUser) => {
+        return {
+          id: groupUser.user.id,
+          email: groupUser.user.email,
+          avatar: groupUser.user.image,
+          name: groupUser.user.name,
+        };
+      }), // Get email of each user in the group
+      becameTesterNumber: group.confirmRequests.filter((request) => request.status === RequestStatus.ACCEPTED).length,
+      notifications: filterUniqueNotificationMessages(group.notifications),
+    };
+
+    return formattedGroups;
   } catch {
     return null;
   }

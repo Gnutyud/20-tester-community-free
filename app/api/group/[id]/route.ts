@@ -43,9 +43,6 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     // Add the selected app to the group
     await joinGroup(appId, groupId);
 
-    // Check and update group status
-    await checkAndUpdateGroupStatus(groupId);
-
     // Send notification to all members in the group about the new member
     if (user && group?.GroupUser) {
       const notificationMessage = `${user.name} has joined the group.`;
@@ -65,10 +62,25 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       await sendNotiNewMemberJoin(memberEmailList, user?.name || user?.email || "");
     }
 
+    // Check and update group status
+    await checkAndUpdateGroupStatus(groupId);
+
     console.log("User joined the group successfully.");
     return NextResponse.json({ success: "User joined the group successfully!" }, { status: 200 });
   } catch (error: any) {
     console.error(`Failed to join the group: ${error.message}`);
+    throw error;
+  }
+}
+
+export async function GET(req: Request, { params }: { params: { id: string } }) {
+  try {
+    const groupId = Number(params.id);
+    const group = await getGroupById(groupId);
+
+    return NextResponse.json(group, { status: 200 });
+  } catch (error: any) {
+    console.error(`Failed to get group by ID: ${error.message}`);
     throw error;
   }
 }

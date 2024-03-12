@@ -4,11 +4,11 @@ import { GroupItem, StatusTypes } from "@/types";
 import clsx from "clsx";
 import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
-import { on } from "events";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
-interface GroupCardProps extends GroupItem {
+interface GroupCardProps extends Omit<GroupItem, 'notifications'> {
   onJoin?: (groupId: number) => void;
 }
 
@@ -75,7 +75,7 @@ const GroupCard = ({ id, maxMembers, status, users, becameTesterNumber, startedT
   const router = useRouter();
 
   const handleJoinGroup = async () => {
-    if(!curentUser) {
+    if (!curentUser) {
       router.push("/auth/login");
       return;
     }
@@ -140,7 +140,25 @@ const GroupCard = ({ id, maxMembers, status, users, becameTesterNumber, startedT
             isCurrentStep={status === StatusTypes.INPROGRESS}
           />
         </ul>
-        {!users.includes(curentUser?.email!) && (
+        <div className="mb-4">
+          <div className="flex -space-x-1 overflow-hidden p-1">
+            {users.map((user, index) => (
+              <Tooltip key={user.id}>
+                <TooltipTrigger asChild>
+                  <Avatar className="inline-block h-8 w-8 rounded-full ring-2 ring-white">
+                    <AvatarImage src={user.avatar} alt={user.name} />
+                    <AvatarFallback>{user.name}</AvatarFallback>
+                  </Avatar>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{user.email}</p>
+                </TooltipContent>
+              </Tooltip>
+            ))}
+          </div>
+        </div>
+
+        {!users.map((user) => user.email).includes(curentUser?.email!) && (
           <Button
             disabled={status !== StatusTypes.OPEN}
             onClick={handleJoinGroup}
@@ -164,7 +182,7 @@ const GroupCard = ({ id, maxMembers, status, users, becameTesterNumber, startedT
             </svg>
           </Button>
         )}
-        {curentUser && users.includes(curentUser.email!) && (
+        {curentUser && users.map((user) => user.email).includes(curentUser.email!) && (
           <Button
             onClick={handleViewGroup}
             className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"

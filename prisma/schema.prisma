@@ -109,6 +109,9 @@ model Notification {
   title   String
   group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
   user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model App {
@@ -121,6 +124,9 @@ model App {
   user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   groups         Group[]     @relation("GroupApps")
   GroupApps      GroupApps[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Group {
@@ -134,6 +140,9 @@ model Group {
   confirmRequests Request[] // Tracks confirmation requests within the group
   GroupUser       GroupUser[]
   GroupApps       GroupApps[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model GroupUser {
@@ -163,4 +172,7 @@ model Request {
   user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   group         Group         @relation(fields: [groupId], references: [id], onDelete: Cascade)
   requestedUser User          @relation("RequestedUser", fields: [userRequested], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
