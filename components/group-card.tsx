@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
-interface GroupCardProps extends Omit<GroupItem, 'notifications'> {
+interface GroupCardProps extends Omit<GroupItem, 'notifications' | 'apps'> {
   onJoin?: (groupId: number) => void;
 }
 
