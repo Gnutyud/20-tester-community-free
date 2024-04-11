@@ -1,3 +1,4 @@
+import { getGroupAppsAndRequests } from "@/data/app";
 import { checkAndUpdateGroupStatus, getGroupById, joinGroup } from "@/data/group";
 import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -75,10 +76,12 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
+    const user = await currentUser();
     const groupId = Number(params.id);
     const group = await getGroupById(groupId);
+    const apps = await getGroupAppsAndRequests(groupId, user?.id || "");
 
-    return NextResponse.json(group, { status: 200 });
+    return NextResponse.json({...group, apps}, { status: 200 });
   } catch (error: any) {
     console.error(`Failed to get group by ID: ${error.message}`);
     throw error;

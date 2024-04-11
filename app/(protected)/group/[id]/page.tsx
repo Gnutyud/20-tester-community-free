@@ -1,41 +1,36 @@
 "use client";
 
-import AppTesting from "@/components/group/app-testing";
 import { GroupWelcome } from "@/components/group/group-welcome";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { GroupItem } from "@/types";
+import { App } from "@prisma/client";
 import axios from "axios";
-import { Bell, AppleIcon } from "lucide-react";
+import { Bell, Copy } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { toast } from "react-hot-toast";
 
 function GroupDetails({ params }: { params: { id: string } }) {
   const id = params.id;
   const [group, setGroup] = useState<GroupItem | null>(null);
   const curentUser = useCurrentUser();
+  const [selectedApp, setSelectedApp] = useState<App | null>(null);
 
   useEffect(() => {
     const fetchGroup = async () => {
@@ -45,6 +40,27 @@ function GroupDetails({ params }: { params: { id: string } }) {
     };
     fetchGroup();
   }, [id]);
+
+  const onCopy = (url?: string) => {
+    if (url) {
+      navigator.clipboard.writeText(url);
+      toast.success("URL copied to clipboard.");
+    }
+  };
+
+  const handleRequest = async () => {
+    try {
+      await axios.post("/api/request", {
+        groupId: group?.id,
+        userId: curentUser?.id,
+        appUserId: selectedApp?.userId,
+      });
+      toast.success("Request sent successfully.");
+      setSelectedApp(null);
+    } catch (error) {
+      toast.error("Failed to send request.");
+    }
+  }
 
   if (!group) {
     return <div>Loading...</div>;
@@ -57,25 +73,17 @@ function GroupDetails({ params }: { params: { id: string } }) {
         <div className="col-span-3">
           <Tabs defaultValue="testing" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="testing">Testing</TabsTrigger>
-              <TabsTrigger value="notification">Notifications</TabsTrigger>
+              <TabsTrigger value="testing">Todo</TabsTrigger>
+              <TabsTrigger value="notification">Tested</TabsTrigger>
             </TabsList>
             <TabsContent value="testing">
               {group.apps.map((app) => (
                 <div
                   key={app.id}
-                  className="group relative flex items-center gap-x-6 rounded-lg p-4 text-sm leading-6 hover:bg-gray-500"
+                  className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-md mb-3"
                 >
-                  <div className="flex h-11 w-11 flex-none items-center justify-center rounded-lg group-hover:bg-gray-50 bg-white">
-                    <AppleIcon className="h-6 w-6 text-gray-600 group-hover:text-indigo-600" aria-hidden="true" />
-                  </div>
-                  <div className="flex-auto">
-                    <a href={app.installUrl} className="block font-semibold dark:text-white text-gray-900">
-                      {app.appName}
-                      <span className="absolute inset-0" />
-                    </a>
-                    <p className="mt-1 dark:text-whitetext-gray-600">{app.installUrl}</p>
-                  </div>
+                  <p className="text-sm font-medium">{app.appName} ({app.packageName})</p>
+                  <Button disabled={(app as any).requestSent} onClick={() => setSelectedApp(app)}>{'Click to test'}</Button>
                 </div>
               ))}
             </TabsContent>
@@ -153,6 +161,65 @@ function GroupDetails({ params }: { params: { id: string } }) {
           </Accordion>
         </div>
       </div>
+      <AlertDialog open={!!selectedApp}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Please follow step below to test this app</AlertDialogTitle>
+            <AlertDialogDescription>
+              <p className="mb-2">Step 1: Copy Google Group Test Url and join the group</p>
+              <p className="mb-2">Step 2: Install the app using the install url</p>
+              <p className="mb-2">Step 3: Click the button below to confirm you have tested the app</p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="max-w-full">
+            <div className="flex flex-col rounded-lg border p-3 shadow-sm mb-3">
+              <p className="text-sm font-medium mb-2">Package Name</p>
+              <p className="text-xs font-mono p-1 bg-slate-100 dark:bg-slate-800 rounded-md">
+                {selectedApp?.packageName}
+              </p>
+            </div>
+            <div className="flex flex-col rounded-lg border p-3 shadow-sm mb-3">
+              <div className="flex flex-row justify-between items-center">
+                <p className="text-sm font-medium mb-2">Install Url</p>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Copy className="mr-2 h-4 w-4" onClick={() => onCopy(selectedApp?.installUrl)} />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Copy url</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              <p className="text-xs font-mono p-1 bg-slate-100 dark:bg-slate-800 rounded-md">
+                {selectedApp?.installUrl}
+              </p>
+            </div>
+            <div className="flex flex-col rounded-lg border p-3 shadow-sm mb-3">
+              <div className="flex flex-row justify-between items-center">
+                <p className="text-sm font-medium mb-2">Google Group Test Url</p>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Copy className="mr-2 h-4 w-4" onClick={() => onCopy(selectedApp?.googleGroupUrl)} />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Copy url</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+
+              <p className="text-xs font-mono p-1 bg-slate-100 dark:bg-slate-800 rounded-md">
+                {selectedApp?.googleGroupUrl}
+              </p>
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setSelectedApp(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRequest}>
+              Confirm became tester
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

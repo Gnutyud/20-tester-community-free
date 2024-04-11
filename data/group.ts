@@ -97,11 +97,11 @@ export const getGroupById = async (id: number) => {
           },
         },
         notifications: true, // Include the notifications of the group
-        GroupApps: {
-          include: {
-            app: true // Include all information about the associated apps
-          },
-        },
+        // GroupApps: {
+        //   include: {
+        //     app: true // Include all information about the associated apps
+        //   },
+        // },
       }, // Include the members of the group
     });
 
@@ -120,9 +120,9 @@ export const getGroupById = async (id: number) => {
       }), // Get email of each user in the group
       becameTesterNumber: group.confirmRequests.filter((request) => request.status === RequestStatus.ACCEPTED).length,
       notifications: filterUniqueNotificationMessages(group.notifications),
-      apps: group.GroupApps.map((groupApp) => {
-        return groupApp.app;
-      }), // Get email of each user in the group
+      // apps: group.GroupApps.map((groupApp) => {
+      //   return groupApp.app;
+      // }), // Get email of each user in the group
     };
 
     return formattedGroups;
