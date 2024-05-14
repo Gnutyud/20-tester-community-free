@@ -70,3 +70,13 @@ export const sendNotiDoneStep2 = async (email: string, groupId: number) => {
     html: `<p>Congratulations! You have almost completed the required 20 tests on Google Play. Just keep testing members's apps every day for 14 days from now.</p><p>Click <a href="${groupLink}">here</a> to see the group status and how many days remain until it is complete.</p>`,
   });
 };
+
+export const sendRequestBecameTesterEmail = async (email: string, groupId: number, requestUserName: string) => {
+  const groupLink = `${domain}/group/${groupId}`;
+  await transporter.sendMail({
+    from: "20 Tester Community <no-reply@20testercommunity.com>",
+    to: email,
+    subject: `Request to become a tester!`,
+    html: `<p>${requestUserName} just asked you to confirm that he had installed the app.</p><p><a href="${groupLink}">View</a></p>`,
+  });
+};

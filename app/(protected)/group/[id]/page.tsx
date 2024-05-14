@@ -32,6 +32,20 @@ function GroupDetails({ params }: { params: { id: string } }) {
   const curentUser = useCurrentUser();
   const [selectedApp, setSelectedApp] = useState<App | null>(null);
 
+  const COMBINE_APPS = group?.apps.map((app) => {
+    let myRequest = group?.confirmRequests.find((request) => request.userId === curentUser?.id && request.userRequested === app.userId);
+    if (myRequest)
+      return {
+        ...app,
+        requestSent: true,
+        requestStatus: myRequest?.status,
+      };
+    return app;
+  });
+  const TESTED_APPS = COMBINE_APPS?.filter((app) => (app as any)?.requestStatus === "ACCEPTED") || [];
+  const TODO_APPS = COMBINE_APPS?.filter((app) => (app as any)?.requestStatus !== "ACCEPTED") || [];
+  // const COMBINE_REQUESTS = group?.confirmRequests.map((request) => {
+
   useEffect(() => {
     const fetchGroup = async () => {
       const res = await axios.get(`/api/group/${id}`);
@@ -60,7 +74,7 @@ function GroupDetails({ params }: { params: { id: string } }) {
     } catch (error) {
       toast.error("Failed to send request.");
     }
-  }
+  };
 
   if (!group) {
     return <div>Loading...</div>;
@@ -77,24 +91,44 @@ function GroupDetails({ params }: { params: { id: string } }) {
               <TabsTrigger value="notification">Tested</TabsTrigger>
             </TabsList>
             <TabsContent value="testing">
-              {group.apps.map((app) => (
-                <div
-                  key={app.id}
-                  className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-md mb-3"
-                >
-                  <p className="text-sm font-medium">{app.appName} ({app.packageName})</p>
-                  <Button disabled={(app as any).requestSent} onClick={() => setSelectedApp(app)}>{'Click to test'}</Button>
+              {TODO_APPS.length > 0 ? (
+                TODO_APPS.map((app) => (
+                  <div
+                    key={app.id}
+                    className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-md mb-3"
+                  >
+                    <p className="text-sm font-medium">
+                      {app.appName} ({app.packageName})
+                    </p>
+                    {!(app as any).requestSent ? (
+                      <Button onClick={() => setSelectedApp(app)}>{"Click to test"}</Button>
+                    ) : (
+                      <Button className="bg-yellow-500">{(app as any)?.requestStatus}</Button>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="text-sm text-muted-foreground">
+                  No apps to test please wait for all members become a tester for each other!
                 </div>
-              ))}
+              )}
             </TabsContent>
             <TabsContent value="notification">
-              {group.notifications.map((notification) => (
-                <Alert className="mb-3" key={notification.id}>
-                  <Bell className="h-4 w-4" />
-                  <AlertTitle>{notification.title}</AlertTitle>
-                  <AlertDescription>{notification.message}</AlertDescription>
-                </Alert>
-              ))}
+              {TESTED_APPS.length > 0 ? (
+                TESTED_APPS.map((app) => (
+                  <div
+                    key={app?.id}
+                    className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-md mb-3"
+                  >
+                    <p className="text-sm font-medium">
+                      {app?.appName} ({app?.packageName})
+                    </p>
+                    <Button className="bg-green-800">{(app as any)?.requestStatus}</Button>
+                  </div>
+                ))
+              ) : (
+                <div className="text-sm text-muted-foreground">You have not tested any apps yet</div>
+              )}
             </TabsContent>
           </Tabs>
         </div>
@@ -214,9 +248,7 @@ function GroupDetails({ params }: { params: { id: string } }) {
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setSelectedApp(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRequest}>
-              Confirm became tester
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleRequest}>Confirm became tester</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

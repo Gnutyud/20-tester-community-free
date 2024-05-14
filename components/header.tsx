@@ -12,7 +12,7 @@ export const Header = () => {
   const user = useCurrentUser();
   return (
     <div className="w-full flex justify-center shadow dark:bg-gray-800 bg-white">
-      <div className="lg:max-w-5xl lg:w-full">
+      <div className="lg:max-w-6xl lg:w-full">
         <div className="flex items-center justify-between font-mono text-sm lg:flex py-4 ">
           <Link href={"/"} className="text-3xl font-extrabold text-gray-900 dark:text-white">
             <span className="text-transparent bg-clip-text bg-gradient-to-r to-emerald-600 from-sky-400">
