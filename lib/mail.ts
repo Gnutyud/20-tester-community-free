@@ -1,3 +1,4 @@
+import { RequestStatus } from "@prisma/client";
 import nodemailer from "nodemailer";
 
 const domain = process.env.NEXT_PUBLIC_APP_URL;
@@ -77,6 +78,22 @@ export const sendRequestBecameTesterEmail = async (email: string, groupId: numbe
     from: "20 Tester Community <no-reply@20testercommunity.com>",
     to: email,
     subject: `Request to become a tester!`,
-    html: `<p>${requestUserName} just asked you to confirm that he had installed the app.</p><p><a href="${groupLink}">View</a></p>`,
+    html: `<p>${requestUserName} just asked you to confirm that he had installed the app.</p><p><a href="${groupLink}">View group</a></p>`,
+  });
+};
+
+export const sendConfirmTesterEmail = async (
+  email: string,
+  groupId: number,
+  actionType: RequestStatus,
+  approvalUserName: string,
+  approvalUserMail: string
+) => {
+  const groupLink = `${domain}/group/${groupId}`;
+  await transporter.sendMail({
+    from: "20 Tester Community <no-reply@20testercommunity.com>",
+    to: email,
+    subject: `Request to become a tester!`,
+    html: `<p>${approvalUserName || ""}<${approvalUserMail}> ${actionType} you installed his app.</p><p><a href="${groupLink}">View group</a></p>`,
   });
 };

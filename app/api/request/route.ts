@@ -37,7 +37,7 @@ export async function POST(req: Request) {
       groupId: groupId,
       userId: appUserId,
       title: `Request to become a tester!`,
-      message: `${requestUser?.name || ""} just asked ${approvalUser?.name || ""} to confirm that he had installed the app.`,
+      message: `${requestUser?.name || ""}<${requestUser?.email}> just asked ${approvalUser?.name || ""}<${approvalUser?.email}> to confirm that he had installed the app.`,
     },
   });
 

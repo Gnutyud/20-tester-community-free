@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { sendNotiDoneStep1 } from "@/lib/mail";
+import { sendNotiDoneStep1, sendNotiDoneStep2 } from "@/lib/mail";
 import { filterUniqueNotificationMessages } from "@/lib/notifications";
 import { RequestStatus, StatusTypes } from "@prisma/client";
 
@@ -14,12 +14,13 @@ export const checkAndUpdateGroupStatus = async (groupId: number): Promise<void> 
             user: true, // Include the user details
           },
         },
+        confirmRequests: true, // Include the confirm requests of the group
       }, // Include the members of the group
     });
 
     if (!group) return;
 
-    if (group?.GroupUser.length >= group.maxMembers) {
+    if (group?.GroupUser.length >= group.maxMembers && group.status === StatusTypes.OPEN) {
       // Update the group status to PENDING (Step 2)
       await db.group.update({
         where: { id: groupId },
@@ -43,6 +44,36 @@ export const checkAndUpdateGroupStatus = async (groupId: number): Promise<void> 
       // send email to all members to start testing each other's apps
       const memberEmailList = (group.GroupUser.map((groupUser) => groupUser.user.email || "") || []).toString();
       await sendNotiDoneStep1(memberEmailList, groupId);
+    }
+    if (
+      group.confirmRequests.filter((request) => request.status === RequestStatus.ACCEPTED).length ===
+        group.maxMembers &&
+      group.status === StatusTypes.PENDING
+    ) {
+      // Update the group status to OPEN
+      await db.group.update({
+        where: { id: groupId },
+        data: {
+          status: StatusTypes.INPROGRESS,
+          startedTestDate: new Date(),
+        },
+      });
+      // push notification to all members to start testing each other's apps
+      const notificationMessage = `Congratulations! You have almost completed the required 20 tests on Google Play. Just keep testing members's apps every day for 14 days from now to complete the group test.`;
+      for (const user of group.GroupUser) {
+        // Create a notification for each user in the group
+        await db.notification.create({
+          data: {
+            groupId: groupId,
+            userId: user.user.id,
+            title: "All members are already became testers!",
+            message: notificationMessage,
+          },
+        });
+      }
+      // send email to all members to start testing each other's apps
+      const memberEmailList = (group.GroupUser.map((groupUser) => groupUser.user.email || "") || []).toString();
+      await sendNotiDoneStep2(memberEmailList, groupId);
     }
   } catch (error) {
     console.error("Error updating group status:", error);

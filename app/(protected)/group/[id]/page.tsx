@@ -1,6 +1,7 @@
 "use client";
 
 import { GroupWelcome } from "@/components/group/group-welcome";
+import { Timer } from "@/components/timer/timer";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
@@ -19,7 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { GroupItem } from "@/types";
-import { App } from "@prisma/client";
+import { App, RequestStatus, StatusTypes } from "@prisma/client";
 import axios from "axios";
 import { Bell, Copy } from "lucide-react";
 import Image from "next/image";
@@ -33,7 +34,9 @@ function GroupDetails({ params }: { params: { id: string } }) {
   const [selectedApp, setSelectedApp] = useState<App | null>(null);
 
   const COMBINE_APPS = group?.apps.map((app) => {
-    let myRequest = group?.confirmRequests.find((request) => request.userId === curentUser?.id && request.userRequested === app.userId);
+    let myRequest = group?.confirmRequests.find(
+      (request) => request.userId === curentUser?.id && request.userRequested === app.userId
+    );
     if (myRequest)
       return {
         ...app,
@@ -44,7 +47,20 @@ function GroupDetails({ params }: { params: { id: string } }) {
   });
   const TESTED_APPS = COMBINE_APPS?.filter((app) => (app as any)?.requestStatus === "ACCEPTED") || [];
   const TODO_APPS = COMBINE_APPS?.filter((app) => (app as any)?.requestStatus !== "ACCEPTED") || [];
-  // const COMBINE_REQUESTS = group?.confirmRequests.map((request) => {
+  const COMBINE_REQUESTS_TO_ME = (
+    group?.confirmRequests.filter(
+      (request) => request.userRequested === curentUser?.id && request.status === "PENDING"
+    ) || []
+  ).map((request) => {
+    let user = group?.users.find((user) => user.id === request.userId);
+    if (!user) return request;
+    return {
+      ...request,
+      userEmail: user?.email,
+      userName: user?.name,
+      userAvatar: user?.avatar,
+    };
+  });
 
   useEffect(() => {
     const fetchGroup = async () => {
@@ -76,63 +92,111 @@ function GroupDetails({ params }: { params: { id: string } }) {
     }
   };
 
+  const handleConfirm = async (requestId: number, actionType: RequestStatus) => {
+    try {
+      await axios.post("/api/request/confirm", {
+        requestId,
+        actionType,
+        groupId: group?.id,
+      });
+      toast.success("Request confirmed successfully.");
+    } catch (error) {
+      toast.error("Failed to confirm request.");
+    }
+  };
+
   if (!group) {
     return <div>Loading...</div>;
   }
 
   return (
     <div className="py-4">
-      <GroupWelcome name={id} maxMembers={group.maxMembers} />
-      <div className="grid grid-cols-5 gap-8 py-4">
-        <div className="col-span-3">
-          <Tabs defaultValue="testing" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="testing">Todo</TabsTrigger>
-              <TabsTrigger value="notification">Tested</TabsTrigger>
-            </TabsList>
-            <TabsContent value="testing">
-              {TODO_APPS.length > 0 ? (
-                TODO_APPS.map((app) => (
-                  <div
-                    key={app.id}
-                    className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-md mb-3"
-                  >
-                    <p className="text-sm font-medium">
-                      {app.appName} ({app.packageName})
-                    </p>
-                    {!(app as any).requestSent ? (
-                      <Button onClick={() => setSelectedApp(app)}>{"Click to test"}</Button>
-                    ) : (
-                      <Button className="bg-yellow-500">{(app as any)?.requestStatus}</Button>
-                    )}
+      <GroupWelcome name={id} maxMembers={group.maxMembers} status={group.status} />
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-8 py-4">
+        <div className="md:col-span-3">
+          {group?.status !== StatusTypes.INPROGRESS && group?.status !== StatusTypes.COMPLETE && (
+            <Tabs defaultValue="testing" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="testing">Todo</TabsTrigger>
+                <TabsTrigger value="confirm">Confirm</TabsTrigger>
+                <TabsTrigger value="tested">Tested</TabsTrigger>
+              </TabsList>
+              <TabsContent value="testing">
+                {TODO_APPS.length > 0 ? (
+                  TODO_APPS.map((app) => (
+                    <div
+                      key={app.id}
+                      className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-md mb-3"
+                    >
+                      <p className="text-sm font-medium">
+                        {app.appName} ({app.packageName})
+                      </p>
+                      {!(app as any).requestSent ? (
+                        <Button onClick={() => setSelectedApp(app)}>{"Click to test"}</Button>
+                      ) : (
+                        <Button className="bg-yellow-500 text-white">{(app as any)?.requestStatus}</Button>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-sm text-muted-foreground">
+                    No apps to test please wait for all members become a tester for each other!
                   </div>
-                ))
-              ) : (
-                <div className="text-sm text-muted-foreground">
-                  No apps to test please wait for all members become a tester for each other!
-                </div>
-              )}
-            </TabsContent>
-            <TabsContent value="notification">
-              {TESTED_APPS.length > 0 ? (
-                TESTED_APPS.map((app) => (
-                  <div
-                    key={app?.id}
-                    className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-md mb-3"
-                  >
-                    <p className="text-sm font-medium">
-                      {app?.appName} ({app?.packageName})
-                    </p>
-                    <Button className="bg-green-800">{(app as any)?.requestStatus}</Button>
-                  </div>
-                ))
-              ) : (
-                <div className="text-sm text-muted-foreground">You have not tested any apps yet</div>
-              )}
-            </TabsContent>
-          </Tabs>
+                )}
+              </TabsContent>
+              <TabsContent value="confirm">
+                {COMBINE_REQUESTS_TO_ME.length > 0 ? (
+                  COMBINE_REQUESTS_TO_ME.map((request) => (
+                    <div
+                      key={request.id}
+                      className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-md mb-3"
+                    >
+                      <p className="text-sm font-medium">
+                        {(request as any)?.userName} ({(request as any)?.userEmail}) just asked you to confirm that he
+                        had installed your app
+                      </p>
+                      <>
+                        <Button
+                          className="mr-2 bg-red-800 text-white"
+                          onClick={() => handleConfirm(request.id, RequestStatus.REJECTED)}
+                        >
+                          {"Reject"}
+                        </Button>
+                        <Button
+                          className="bg-green-800 text-white"
+                          onClick={() => handleConfirm(request.id, RequestStatus.ACCEPTED)}
+                        >
+                          {"Confirm"}
+                        </Button>
+                      </>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-sm text-muted-foreground">No apps to confirm right now!</div>
+                )}
+              </TabsContent>
+              <TabsContent value="tested">
+                {TESTED_APPS.length > 0 ? (
+                  TESTED_APPS.map((app) => (
+                    <div
+                      key={app?.id}
+                      className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-md mb-3"
+                    >
+                      <p className="text-sm font-medium">
+                        {app?.appName} ({app?.packageName})
+                      </p>
+                      <Button className="bg-green-800 text-white">{(app as any)?.requestStatus}</Button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-sm text-muted-foreground">You have not tested any apps yet</div>
+                )}
+              </TabsContent>
+            </Tabs>
+          )}
+          {group?.status === StatusTypes.INPROGRESS && <Timer endDate={group?.startedTestDate!} />}
         </div>
-        <div className="col-span-2">
+        <div className="md:col-span-2">
           <Accordion type="single" defaultValue="activity" collapsible className="w-full">
             <AccordionItem value="activity">
               <AccordionTrigger>Group activity</AccordionTrigger>
