@@ -5,9 +5,10 @@ interface GroupWelcomeProps {
   name: string;
   maxMembers: number;
   status: StatusTypes;
+  members: number;
 }
 
-export const GroupWelcome = ({ name, maxMembers, status }: GroupWelcomeProps) => {
+export const GroupWelcome = ({ name, maxMembers, status, members }: GroupWelcomeProps) => {
   return (
     <div className="space-y-2 px-4 mb-4">
       <div className="h-[75px] w-[75px] rounded-full bg-zinc-500 dark:bg-zinc-700 flex items-center justify-center">
@@ -37,7 +38,7 @@ export const GroupWelcome = ({ name, maxMembers, status }: GroupWelcomeProps) =>
       </div>
       <p className="text-xl md:text-3xl font-bold">
         {"Welcome to group #"}
-        {name}
+        {name} ({members}/{maxMembers})
       </p>
       <p className="text-zinc-600 dark:text-zinc-400 text-sm">{`This is the group will help ${maxMembers} apps pass the Google Play Console closed tesing required.`}</p>
     </div>

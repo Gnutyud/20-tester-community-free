@@ -4,6 +4,7 @@ import { GroupWelcome } from "@/components/group/group-welcome";
 import { Timer } from "@/components/timer/timer";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { UploadImageInputDropzone } from "@/components/upload-image";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { GroupItem } from "@/types";
 import { App, RequestStatus, StatusTypes } from "@prisma/client";
@@ -32,6 +34,8 @@ function GroupDetails({ params }: { params: { id: string } }) {
   const [group, setGroup] = useState<GroupItem | null>(null);
   const curentUser = useCurrentUser();
   const [selectedApp, setSelectedApp] = useState<App | null>(null);
+  const [imageUrl, setImageUrl] = useState<string>("");
+  const [imageUploadMethod, setImageUploadMethod] = useState<"link" | "upload">("link");
 
   const COMBINE_APPS = group?.apps.map((app) => {
     let myRequest = group?.confirmRequests.find(
@@ -65,7 +69,6 @@ function GroupDetails({ params }: { params: { id: string } }) {
   useEffect(() => {
     const fetchGroup = async () => {
       const res = await axios.get(`/api/group/${id}`);
-      console.log(res.data);
       setGroup(res.data);
     };
     fetchGroup();
@@ -84,9 +87,11 @@ function GroupDetails({ params }: { params: { id: string } }) {
         groupId: group?.id,
         userId: curentUser?.id,
         appUserId: selectedApp?.userId,
+        imageUrl: imageUrl
       });
       toast.success("Request sent successfully.");
       setSelectedApp(null);
+      setImageUrl('');
     } catch (error) {
       toast.error("Failed to send request.");
     }
@@ -111,7 +116,7 @@ function GroupDetails({ params }: { params: { id: string } }) {
 
   return (
     <div className="py-4">
-      <GroupWelcome name={id} maxMembers={group.maxMembers} status={group.status} />
+      <GroupWelcome name={id} maxMembers={group.maxMembers} status={group.status} members={group.users.length} />
       <div className="grid grid-cols-1 md:grid-cols-5 gap-8 py-4">
         <div className="md:col-span-3">
           {group?.status !== StatusTypes.INPROGRESS && group?.status !== StatusTypes.COMPLETE && (
@@ -215,7 +220,9 @@ function GroupDetails({ params }: { params: { id: string } }) {
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="members">
-              <AccordionTrigger>Members ({group.users.length})</AccordionTrigger>
+              <AccordionTrigger>
+                Members ({group.users.length}/{group.maxMembers})
+              </AccordionTrigger>
               <AccordionContent>
                 <ul role="list" className="border rounded-lg p-4 shadow-md">
                   {group.users.map((person, index) => (
@@ -230,7 +237,9 @@ function GroupDetails({ params }: { params: { id: string } }) {
                             alt={person.name}
                           />
                           <div className="min-w-0 flex-auto">
-                            <p className="text-sm font-semibold leading-6">{person.name}</p>
+                            <p className="text-sm font-semibold leading-6">
+                              {person.name} {person.id === curentUser?.id && "(You)"}
+                            </p>
                             <p className="mt-1 truncate text-xs leading-5 text-gray-500">{person.email}</p>
                           </div>
                         </div>
@@ -260,7 +269,7 @@ function GroupDetails({ params }: { params: { id: string } }) {
         </div>
       </div>
       <AlertDialog open={!!selectedApp}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-h-[90%] overflow-auto">
           <AlertDialogHeader>
             <AlertDialogTitle>Please follow step below to test this app</AlertDialogTitle>
             <AlertDialogDescription>
@@ -309,9 +318,61 @@ function GroupDetails({ params }: { params: { id: string } }) {
                 {selectedApp?.googleGroupUrl}
               </p>
             </div>
+            <div className="flex flex-col rounded-lg border p-3 shadow-sm mb-3">
+              <p className="text-sm font-medium mb-2">Evidence image url (optional)</p>
+              <div className="flex mb-4 justify-center">
+                <div className="flex items-center mr-4">
+                  <input
+                    onChange={() => setImageUploadMethod("link")}
+                    id="link-image"
+                    type="radio"
+                    value="link"
+                    checked={imageUploadMethod === "link"}
+                    name="link-image"
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300"
+                  />
+                  <label htmlFor="link-image" className="ml-2 text-sm font-medium text-gray-900 dark:text-white">
+                    Insert Url
+                  </label>
+                </div>
+                <div className="flex items-center mr-4">
+                  <input
+                    onChange={() => setImageUploadMethod("upload")}
+                    id="upload-image"
+                    value="upload"
+                    checked={imageUploadMethod === "upload"}
+                    type="radio"
+                    name="upload-image"
+                    className="w-4 h-4 checked:bg-green-500 text-red-600 bg-gray-100 border-gray-300"
+                  />
+                  <label htmlFor="upload-image" className="ml-2 text-sm font-medium text-gray-900 dark:text-white">
+                    Upload file
+                  </label>
+                </div>
+              </div>
+              {imageUploadMethod === "link" ? (
+                <Input
+                  type="text"
+                  id="image"
+                  placeholder="Insert your evidence image url to prove that you installed app."
+                  value={imageUrl}
+                  onChange={(event) => setImageUrl(event.target.value)}
+                />
+              ) : (
+                <UploadImageInputDropzone setValue={(value: string) => setImageUrl(value)} />
+              )}
+              {imageUrl && (
+                <div className="mt-4">
+                  <img className="w-auto h-[200px]" src={imageUrl} alt="evidence image preview" />
+                </div>
+              )}
+            </div>
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setSelectedApp(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => {
+              setSelectedApp(null);
+              setImageUrl('');
+            }}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleRequest}>Confirm became tester</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

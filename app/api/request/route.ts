@@ -12,11 +12,12 @@ export async function GET() {
 // Send a request confirmation became tester to the app owner
 export async function POST(req: Request) {
   const body = await req.json();
-  const { groupId, userId, appUserId } = body;
+  const { groupId, userId, appUserId, imageUrl } = body;
   const request = await db.request.create({
     data: {
       groupId,
       userId,
+      // imageUrl,
       userRequested: appUserId, // ID of the user whose app is requested to be tested
       status: "PENDING", // Set the initial status to PENDING
     },
