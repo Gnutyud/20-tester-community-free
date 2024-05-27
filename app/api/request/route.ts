@@ -1,4 +1,3 @@
-import { getGroups } from "@/data/group";
 import { db } from "@/lib/db";
 import { sendRequestBecameTesterEmail } from "@/lib/mail";
 import { NextResponse } from "next/server";
@@ -17,7 +16,7 @@ export async function POST(req: Request) {
     data: {
       groupId,
       userId,
-      // imageUrl,
+      imageUrl,
       userRequested: appUserId, // ID of the user whose app is requested to be tested
       status: "PENDING", // Set the initial status to PENDING
     },
@@ -30,7 +29,7 @@ export async function POST(req: Request) {
   });
   // send email to the app owner
   if (approvalUser?.email) {
-    await sendRequestBecameTesterEmail(approvalUser?.email, groupId, requestUser?.name || "");
+    await sendRequestBecameTesterEmail(approvalUser?.email, groupId, requestUser?.name || "", imageUrl);
   }
   // Create a notification for each user in the group
   await db.notification.create({
@@ -38,7 +37,45 @@ export async function POST(req: Request) {
       groupId: groupId,
       userId: appUserId,
       title: `Request to become a tester!`,
-      message: `${requestUser?.name || ""}<${requestUser?.email}> just asked ${approvalUser?.name || ""}<${approvalUser?.email}> to confirm that he had installed the app.`,
+      message: `${requestUser?.name || ""}<${requestUser?.email}> just asked ${approvalUser?.name || ""}<${
+        approvalUser?.email
+      }> to confirm that he had installed the app.`,
+    },
+  });
+
+  return NextResponse.json("Send success", { status: 200 });
+}
+
+// Re-send a request confirmation became tester to the app owner
+export async function PUT(req: Request) {
+  const body = await req.json();
+  const { imageUrl, id } = body;
+  const request = await db.request.update({
+    where: { id },
+    data: {
+      imageUrl,
+      status: "PENDING", // Set the initial status to PENDING
+    },
+  });
+  const requestUser = await db.user.findUnique({
+    where: { id: request.userId },
+  });
+  const approvalUser = await db.user.findUnique({
+    where: { id: request.userRequested },
+  });
+  // send email to the app owner
+  if (approvalUser?.email) {
+    await sendRequestBecameTesterEmail(approvalUser?.email, request.groupId, requestUser?.name || "", imageUrl);
+  }
+  // Create a notification for each user in the group
+  await db.notification.create({
+    data: {
+      groupId: request.groupId,
+      userId: request.userRequested,
+      title: `Request to become a tester!`,
+      message: `${requestUser?.name || ""}<${requestUser?.email}> just asked ${approvalUser?.name || ""}<${
+        approvalUser?.email
+      }> to confirm that he had installed the app.`,
     },
   });
 

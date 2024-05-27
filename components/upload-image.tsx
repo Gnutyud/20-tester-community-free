@@ -1,6 +1,6 @@
 // import { uploadFileToFirebase } from "@/utils/uploadFileToFirebase";
-import React, { useEffect, useRef, useState } from "react";
-import { LiaEyeSlashSolid, LiaEyeSolid } from "react-icons/lia";
+import { uploadFileToFirebase } from "@/lib/firebase";
+import React, { useEffect, useRef } from "react";
 
 export const UploadImageInputDropzone = ({ label, setValue, ...others }: any) => {
   const dragdropRef = useRef<HTMLDivElement>(null);
@@ -26,27 +26,8 @@ export const UploadImageInputDropzone = ({ label, setValue, ...others }: any) =>
     //     setValue((reader.result as string) || "");
     //   });
     // }
-    //   const imageLink = await uploadFileToFirebase(imageFile);
-    // Upload the image using the fetch and FormData APIs
-    let formData = new FormData();
-    // Assume "image" is the name of the form field the server expects
-    formData.append("image", imageFile);
-    formData.append("type", 'file');
-    formData.append("name", imageFile.name);
-
-    const response = await fetch("https://api.imgur.com/3/upload?client_id=546c25a59c58ad7", {
-      method: "POST",
-      body: formData,
-      headers: {
-        "content-type": "multipart/form-data",
-        // Authorization: "Client-ID 546c25a59c58ad7",
-      },
-    });
-    const imgRes = await response.json();
-    if (imgRes && imgRes?.data?.link) {
-      console.log(imgRes?.data?.link);
-      setValue(imgRes.data.link);
-    }
+    const imageLink = await uploadFileToFirebase(imageFile);
+    setValue(imageLink);
   };
 
   // handle drag events
@@ -92,12 +73,12 @@ export const UploadImageInputDropzone = ({ label, setValue, ...others }: any) =>
       <div className="flex items-center justify-center w-full">
         <label
           htmlFor="dropzone-file"
-          className="flex flex-col items-center justify-center w-full border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 "
+          className="flex flex-col items-center justify-center w-full border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 dark:bg-slate-700 dark:border-slate-600 dark:hover:bg-slate-600 dark:text-gray-100"
         >
           <div ref={dragdropRef} className="flex flex-col items-center justify-center pt-5 pb-6">
             <svg
               aria-hidden="true"
-              className="w-10 h-10 mb-3 text-gray-400"
+              className="w-10 h-10 mb-3 text-gray-400 dark:text-white"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -110,11 +91,11 @@ export const UploadImageInputDropzone = ({ label, setValue, ...others }: any) =>
                 d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
               ></path>
             </svg>
-            <p className="mb-2 text-sm text-gray-500 pl-4 pr-4 text-center">
+            <p className="mb-2 text-sm text-gray-500 pl-4 pr-4 text-center dark:text-white">
               <span className="font-semibold">Click to upload your evidence to prove that you installed app</span> or
               drag and drop
             </p>
-            <p className="text-xs text-gray-500">PNG, JPG, GIF or SVG</p>
+            <p className="text-xs text-gray-500 dark:text-white">PNG, JPG, GIF or SVG</p>
           </div>
 
           <input

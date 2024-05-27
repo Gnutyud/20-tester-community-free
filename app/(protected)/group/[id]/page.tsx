@@ -4,7 +4,6 @@ import { GroupWelcome } from "@/components/group/group-welcome";
 import { Timer } from "@/components/timer/timer";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,6 +15,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -24,6 +25,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { GroupItem } from "@/types";
 import { App, RequestStatus, StatusTypes } from "@prisma/client";
 import axios from "axios";
+import dayjs from "dayjs";
 import { Bell, Copy } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -46,6 +48,7 @@ function GroupDetails({ params }: { params: { id: string } }) {
         ...app,
         requestSent: true,
         requestStatus: myRequest?.status,
+        requestId: myRequest?.id,
       };
     return app;
   });
@@ -66,11 +69,12 @@ function GroupDetails({ params }: { params: { id: string } }) {
     };
   });
 
+  const fetchGroup = async () => {
+    const res = await axios.get(`/api/group/${id}`);
+    setGroup(res.data);
+  };
+
   useEffect(() => {
-    const fetchGroup = async () => {
-      const res = await axios.get(`/api/group/${id}`);
-      setGroup(res.data);
-    };
     fetchGroup();
   }, [id]);
 
@@ -83,15 +87,23 @@ function GroupDetails({ params }: { params: { id: string } }) {
 
   const handleRequest = async () => {
     try {
-      await axios.post("/api/request", {
-        groupId: group?.id,
-        userId: curentUser?.id,
-        appUserId: selectedApp?.userId,
-        imageUrl: imageUrl
-      });
+      if (!(selectedApp as any)?.requestId) {
+        await axios.post("/api/request", {
+          groupId: group?.id,
+          userId: curentUser?.id,
+          appUserId: selectedApp?.userId,
+          imageUrl: imageUrl,
+        });
+      } else {
+        await axios.put("/api/request", {
+          id: (selectedApp as any)?.requestId,
+          imageUrl: imageUrl,
+        });
+      }
       toast.success("Request sent successfully.");
       setSelectedApp(null);
-      setImageUrl('');
+      setImageUrl("");
+      fetchGroup();
     } catch (error) {
       toast.error("Failed to send request.");
     }
@@ -104,7 +116,8 @@ function GroupDetails({ params }: { params: { id: string } }) {
         actionType,
         groupId: group?.id,
       });
-      toast.success("Request confirmed successfully.");
+      toast.success("Send response successfully.");
+      fetchGroup();
     } catch (error) {
       toast.error("Failed to confirm request.");
     }
@@ -138,8 +151,16 @@ function GroupDetails({ params }: { params: { id: string } }) {
                       </p>
                       {!(app as any).requestSent ? (
                         <Button onClick={() => setSelectedApp(app)}>{"Click to test"}</Button>
+                      ) : (app as any)?.requestStatus === RequestStatus.REJECTED ? (
+                        <Button className="bg-green-500 text-white" onClick={() => setSelectedApp(app)}>
+                          Re-test
+                        </Button>
                       ) : (
-                        <Button className="bg-yellow-500 text-white">{(app as any)?.requestStatus}</Button>
+                        <Button className="bg-yellow-500 text-white">
+                          {(app as any)?.requestStatus === RequestStatus.REJECTED
+                            ? "Re-test"
+                            : (app as any)?.requestStatus}
+                        </Button>
                       )}
                     </div>
                   ))
@@ -152,29 +173,39 @@ function GroupDetails({ params }: { params: { id: string } }) {
               <TabsContent value="confirm">
                 {COMBINE_REQUESTS_TO_ME.length > 0 ? (
                   COMBINE_REQUESTS_TO_ME.map((request) => (
-                    <div
-                      key={request.id}
-                      className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-md mb-3"
-                    >
-                      <p className="text-sm font-medium">
-                        {(request as any)?.userName} ({(request as any)?.userEmail}) just asked you to confirm that he
-                        had installed your app
-                      </p>
-                      <>
-                        <Button
-                          className="mr-2 bg-red-800 text-white"
-                          onClick={() => handleConfirm(request.id, RequestStatus.REJECTED)}
-                        >
-                          {"Reject"}
-                        </Button>
-                        <Button
-                          className="bg-green-800 text-white"
-                          onClick={() => handleConfirm(request.id, RequestStatus.ACCEPTED)}
-                        >
-                          {"Confirm"}
-                        </Button>
-                      </>
-                    </div>
+                    <HoverCard key={request.id}>
+                      <HoverCardTrigger>
+                        <div className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-md mb-3">
+                          <p className="text-sm font-medium">
+                            {(request as any)?.userName} ({(request as any)?.userEmail}) just asked you to confirm that
+                            he had installed your app
+                          </p>
+                          <>
+                            <Button
+                              className="mr-2 bg-red-800 text-white"
+                              onClick={() => handleConfirm(request.id, RequestStatus.REJECTED)}
+                            >
+                              {"Reject"}
+                            </Button>
+                            <Button
+                              className="bg-green-800 text-white"
+                              onClick={() => handleConfirm(request.id, RequestStatus.ACCEPTED)}
+                            >
+                              {"Confirm"}
+                            </Button>
+                          </>
+                        </div>
+                      </HoverCardTrigger>
+                      <HoverCardContent>
+                        <div className="flex justify-center items-center">
+                          <img
+                            className="w-auto h-[400px]"
+                            src={request?.imageUrl || ""}
+                            alt="evidence image preview"
+                          />
+                        </div>
+                      </HoverCardContent>
+                    </HoverCard>
                   ))
                 ) : (
                   <div className="text-sm text-muted-foreground">No apps to confirm right now!</div>
@@ -200,6 +231,11 @@ function GroupDetails({ params }: { params: { id: string } }) {
             </Tabs>
           )}
           {group?.status === StatusTypes.INPROGRESS && <Timer endDate={group?.startedTestDate!} />}
+          {group?.status === StatusTypes.COMPLETE && (
+            <div className="mt-4 font-red-hat text-4xl dark:text-white duration-300 ease-in text-center text-back">
+              Group test has been completed!
+            </div>
+          )}
         </div>
         <div className="md:col-span-2">
           <Accordion type="single" defaultValue="activity" collapsible className="w-full">
@@ -210,7 +246,9 @@ function GroupDetails({ params }: { params: { id: string } }) {
                   group.notifications.map((notification) => (
                     <Alert className="mb-3" key={notification.id}>
                       <Bell className="h-4 w-4" />
-                      <AlertTitle>{notification.title}</AlertTitle>
+                      <AlertTitle>{`${dayjs(notification.createdAt).format("DD/MM/YYYY")} - ${
+                        notification.title
+                      }`}</AlertTitle>
                       <AlertDescription>{notification.message}</AlertDescription>
                     </Alert>
                   ))
@@ -362,17 +400,21 @@ function GroupDetails({ params }: { params: { id: string } }) {
                 <UploadImageInputDropzone setValue={(value: string) => setImageUrl(value)} />
               )}
               {imageUrl && (
-                <div className="mt-4">
+                <div className="mt-4 flex justify-center items-center">
                   <img className="w-auto h-[200px]" src={imageUrl} alt="evidence image preview" />
                 </div>
               )}
             </div>
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => {
-              setSelectedApp(null);
-              setImageUrl('');
-            }}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel
+              onClick={() => {
+                setSelectedApp(null);
+                setImageUrl("");
+              }}
+            >
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction onClick={handleRequest}>Confirm became tester</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

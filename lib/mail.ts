@@ -72,13 +72,27 @@ export const sendNotiDoneStep2 = async (email: string, groupId: number) => {
   });
 };
 
-export const sendRequestBecameTesterEmail = async (email: string, groupId: number, requestUserName: string) => {
+export const sendNotiDoneStep3 = async (email: string) => {
+  await transporter.sendMail({
+    from: "20 Tester Community <no-reply@20testercommunity.com>",
+    to: email,
+    subject: "Group test has been completed!",
+    html: `<p>Congratulations! Your group test has been completed successfully. Thank you for using our service.</p>`,
+  });
+};
+
+export const sendRequestBecameTesterEmail = async (
+  email: string,
+  groupId: number,
+  requestUserName: string,
+  imageUrl: string
+) => {
   const groupLink = `${domain}/group/${groupId}`;
   await transporter.sendMail({
     from: "20 Tester Community <no-reply@20testercommunity.com>",
     to: email,
     subject: `Request to become a tester!`,
-    html: `<p>${requestUserName} just asked you to confirm that he had installed the app.</p><p><a href="${groupLink}">View group</a></p>`,
+    html: `<p>${requestUserName} just asked you to confirm that he had installed the app.</p><p><img src=${imageUrl} alt="Screenshot of request evidence installed app"></p></p><p><a href="${groupLink}">Click here to the group test and look at the confirm tab</a></p>`,
   });
 };
 
@@ -94,6 +108,8 @@ export const sendConfirmTesterEmail = async (
     from: "20 Tester Community <no-reply@20testercommunity.com>",
     to: email,
     subject: `Request to become a tester!`,
-    html: `<p>${approvalUserName || ""}<${approvalUserMail}> ${actionType} you installed his app.</p><p><a href="${groupLink}">View group</a></p>`,
+    html: `<p>${
+      approvalUserName || ""
+    }<${approvalUserMail}> ${actionType} you installed his app.</p><p><a href="${groupLink}">View group</a></p>`,
   });
 };

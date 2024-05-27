@@ -1,7 +1,8 @@
 import { db } from "@/lib/db";
-import { sendNotiDoneStep1, sendNotiDoneStep2 } from "@/lib/mail";
+import { sendNotiDoneStep1, sendNotiDoneStep2, sendNotiDoneStep3 } from "@/lib/mail";
 import { filterUniqueNotificationMessages } from "@/lib/notifications";
 import { RequestStatus, StatusTypes } from "@prisma/client";
+import { scheduleJob } from "node-schedule";
 
 // Function to check and update group status
 export const checkAndUpdateGroupStatus = async (groupId: number): Promise<void> => {
@@ -50,7 +51,7 @@ export const checkAndUpdateGroupStatus = async (groupId: number): Promise<void> 
         group.maxMembers &&
       group.status === StatusTypes.PENDING
     ) {
-      // Update the group status to OPEN
+      // Update the group status to INPROGRESS (Step 3)
       await db.group.update({
         where: { id: groupId },
         data: {
@@ -74,6 +75,32 @@ export const checkAndUpdateGroupStatus = async (groupId: number): Promise<void> 
       // send email to all members to start testing each other's apps
       const memberEmailList = (group.GroupUser.map((groupUser) => groupUser.user.email || "") || []).toString();
       await sendNotiDoneStep2(memberEmailList, groupId);
+      // schedule a job to update group status to COMPLETED after 14 days (Step 4)
+      scheduleJob(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), async () => {
+        await db.group.update({
+          where: { id: groupId },
+          data: {
+            status: StatusTypes.COMPLETE,
+          },
+        });
+
+        // push notification to all members to start testing each other's apps
+        const notificationMessage = `Congratulations! Your group test has been completed successfully. Thank you for using our service.`;
+        for (const user of group.GroupUser) {
+          // Create a notification for each user in the group
+          await db.notification.create({
+            data: {
+              groupId: groupId,
+              userId: user.user.id,
+              title: "Group test has been completed!",
+              message: notificationMessage,
+            },
+          });
+        }
+        // send email to all members to start testing each other's apps
+        const memberEmailList = (group.GroupUser.map((groupUser) => groupUser.user.email || "") || []).toString();
+        await sendNotiDoneStep3(memberEmailList);
+      });
     }
   } catch (error) {
     console.error("Error updating group status:", error);
