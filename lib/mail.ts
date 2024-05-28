@@ -92,7 +92,14 @@ export const sendRequestBecameTesterEmail = async (
     from: "20 Tester Community <no-reply@20testercommunity.com>",
     to: email,
     subject: `Request to become a tester!`,
-    html: `<p>${requestUserName} just asked you to confirm that he had installed the app.</p><p><img src=${imageUrl} alt="Screenshot of request evidence installed app"></p></p><p><a href="${groupLink}">Click here to the group test and look at the confirm tab</a></p>`,
+    html: `<p>${requestUserName} just asked you to confirm that he had installed the app.</p><p><img src="cid:evidence" alt="Screenshot of request evidence installed app"></p></p><p><a href="${groupLink}">Click here to the group test and look at the confirm tab</a></p>`,
+    attachments: [
+      {
+        filename: "evidence.png",
+        path: imageUrl,
+        cid: "evidence",
+      },
+    ],
   });
 };
 
