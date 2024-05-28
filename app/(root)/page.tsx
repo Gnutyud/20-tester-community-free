@@ -24,6 +24,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import Loading from "./loading";
 
 export default function Home() {
   const [groupData, setGroupData] = useState<GroupItem[]>([]);
@@ -33,6 +34,7 @@ export default function Home() {
   const curentUser = useCurrentUser();
   const router = useRouter();
   const [apps, setApps] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   const openData = groupData.filter((data) => data.status === StatusTypes.OPEN);
   const inprogressData = groupData.filter(
@@ -42,8 +44,14 @@ export default function Home() {
 
   useEffect(() => {
     const fetchGroupData = async () => {
-      const response: { data: GroupItem[] } = await axios.get("/api/group");
-      setGroupData(response.data);
+      try {
+        const response: { data: GroupItem[] } = await axios.get("/api/group");
+        setGroupData(response.data);
+        setLoading(false);
+      } catch (error) {
+        console.log("Error fetching group data", error);
+        setLoading(false);
+      }
     };
     fetchGroupData();
     getNotifications();
@@ -90,6 +98,10 @@ export default function Home() {
       setGroupId(null);
     }
   };
+
+  if (loading && groupData.length === 0) {
+    return <Loading />;
+  }
 
   return (
     <>

@@ -30,6 +30,7 @@ import { Bell, Copy } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import Loading from "./loading";
 
 function GroupDetails({ params }: { params: { id: string } }) {
   const id = params.id;
@@ -124,7 +125,7 @@ function GroupDetails({ params }: { params: { id: string } }) {
   };
 
   if (!group) {
-    return <div>Loading...</div>;
+    return <Loading />;
   }
 
   return (
