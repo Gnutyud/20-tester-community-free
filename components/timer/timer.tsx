@@ -7,7 +7,6 @@ export const Timer = ({ endDate }: { endDate: string }) => {
 
   useEffect(() => {
     const updateCountdown = setInterval(() => {
-      console.log(1);
       const newCountdown = timeCalculation(endDate) || [];
       setCountdown(newCountdown);
     }, 1000);

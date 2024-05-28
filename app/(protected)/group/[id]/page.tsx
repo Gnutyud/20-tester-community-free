@@ -23,7 +23,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { UploadImageInputDropzone } from "@/components/upload-image";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { GroupItem } from "@/types";
-import { App, RequestStatus, StatusTypes } from "@prisma/client";
+import { App, RequestStatus, StatusTypes, Notification } from "@prisma/client";
 import axios from "axios";
 import dayjs from "dayjs";
 import { Bell, Copy } from "lucide-react";
@@ -73,6 +73,7 @@ function GroupDetails({ params }: { params: { id: string } }) {
   const fetchGroup = async () => {
     const res = await axios.get(`/api/group/${id}`);
     setGroup(res.data);
+    makeAllAsRead(res?.data?.notifications || []);
   };
 
   useEffect(() => {
@@ -121,6 +122,17 @@ function GroupDetails({ params }: { params: { id: string } }) {
       fetchGroup();
     } catch (error) {
       toast.error("Failed to confirm request.");
+    }
+  };
+
+  const makeAllAsRead = async (notifications: Notification[]) => {
+    try {
+      const requests = notifications
+        .filter((noti) => noti.unread && noti.userId === curentUser?.id)
+        .map((noti) => axios.post("/api/notification", { id: noti.id }));
+      await Promise.all(requests);
+    } catch (error) {
+      console.log("Failed to update all notification.");
     }
   };
 
