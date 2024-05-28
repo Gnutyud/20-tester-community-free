@@ -102,13 +102,14 @@ model TwoFactorConfirmation {
 }
 
 model Notification {
-  id      Int    @id @default(autoincrement())
+  id      Int     @id @default(autoincrement())
   groupId Int
   userId  String
   message String
   title   String
-  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unread  Boolean @default(true)
+  group   Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

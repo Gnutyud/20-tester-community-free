@@ -19,13 +19,29 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { Mail, MessageSquare, Plus, Settings, User, UserPlus, Users, Key, Bell } from "lucide-react";
+import { Notification, UserRole } from "@prisma/client";
+import axios from "axios";
+import { Bell, Key, Mail, MessageSquare, Plus, Settings, User, UserPlus, Users } from "lucide-react";
 import Link from "next/link";
-import { UserRole } from "@prisma/client";
+import { useEffect, useState } from "react";
 import { Badge } from "./ui/badge";
 
 export const UserButton = () => {
   const user = useCurrentUser();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  useEffect(() => {
+    getNotifications();
+  }, []);
+
+  const getNotifications = async () => {
+    try {
+      const response: { data: Notification[] } = await axios.get("/api/notification");
+      setNotifications(response.data || []);
+    } catch (error) {
+      console.log("error");
+    }
+  };
 
   return (
     <DropdownMenu>
@@ -37,9 +53,9 @@ export const UserButton = () => {
               <FaUser className="text-white" />
             </AvatarFallback>
           </Avatar>
-          <Badge className="absolute -top-2 -right-4" variant="destructive">
-            2
-          </Badge>
+          {notifications.length > 0 && <Badge className="absolute -top-2 -right-4" variant="destructive">
+            {notifications.length}
+          </Badge>}
         </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-40" align="end">
@@ -60,9 +76,9 @@ export const UserButton = () => {
             <Bell className="mr-2 h-4 w-4" />
             <div className="relative">
               <Link href="/notification">Notification</Link>
-              <Badge className="absolute -top-2 -right-7" variant="destructive">
-                2
-              </Badge>
+              {notifications.length > 0 && <Badge className="absolute -top-2 -right-9" variant="destructive">
+                {notifications.length}
+              </Badge>}
             </div>
           </DropdownMenuItem>
           <DropdownMenuItem>

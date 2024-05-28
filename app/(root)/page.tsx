@@ -54,7 +54,6 @@ export default function Home() {
       }
     };
     fetchGroupData();
-    getNotifications();
   }, []);
 
   useEffect(() => {
@@ -64,11 +63,6 @@ export default function Home() {
     };
     fetchGroupData();
   }, []);
-
-  const getNotifications = async () => {
-    const response = await axios.get("/api/notification");
-    console.log("Notifications", response.data);
-  };
 
   const onSelectGroupToJoin = (groupId: number) => {
     if (apps.length === 0) {

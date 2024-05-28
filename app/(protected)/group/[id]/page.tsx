@@ -247,7 +247,7 @@ function GroupDetails({ params }: { params: { id: string } }) {
                   group.notifications.map((notification) => (
                     <Alert className="mb-3" key={notification.id}>
                       <Bell className="h-4 w-4" />
-                      <AlertTitle>{`${dayjs(notification.createdAt).format("DD/MM/YYYY")} - ${
+                      <AlertTitle>{`${dayjs(notification.createdAt).format("MMM D, YYYY h:mm A")} - ${
                         notification.title
                       }`}</AlertTitle>
                       <AlertDescription>{notification.message}</AlertDescription>
