@@ -21,10 +21,12 @@ import { GroupItem, StatusTypes } from "@/types";
 import axios from "axios";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import Loading from "./loading";
+
+type TabName = "open" | "inprogress" | "complete";
 
 export default function Home() {
   const [groupData, setGroupData] = useState<GroupItem[]>([]);
@@ -35,9 +37,10 @@ export default function Home() {
   const router = useRouter();
   const [apps, setApps] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const tabName = searchParams.get("tab");
-  const [defaultTab, setDefaultTab] = useState<"open" | "inprogress" | "complete">(
+  const [defaultTab, setDefaultTab] = useState<TabName>(
     tabName === "inprogress" ? "inprogress" : tabName === "complete" ? "complete" : "open"
   );
 
@@ -68,6 +71,22 @@ export default function Home() {
     };
     fetchGroupData();
   }, []);
+
+  // searchParams with a provided key/value pair
+  const createQueryString = useCallback(
+    (name: string, value: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set(name, value);
+
+      return params.toString();
+    },
+    [searchParams]
+  );
+
+  const setParams = (value: TabName) => {
+    // <pathname>?tab=complete
+    router.push(pathname + "?" + createQueryString("tab", value));
+  };
 
   const onSelectGroupToJoin = (groupId: number) => {
     if (apps.length === 0) {
@@ -126,9 +145,15 @@ export default function Home() {
               )}
               <Tabs defaultValue={defaultTab} className="w-full">
                 <TabsList>
-                  <TabsTrigger value="open">Open</TabsTrigger>
-                  <TabsTrigger value="inprogress">Inprogress</TabsTrigger>
-                  <TabsTrigger value="complete">Complete</TabsTrigger>
+                  <TabsTrigger value="open" onClick={() => setParams("open")}>
+                    Open
+                  </TabsTrigger>
+                  <TabsTrigger value="inprogress" onClick={() => setParams("inprogress")}>
+                    Inprogress
+                  </TabsTrigger>
+                  <TabsTrigger value="complete" onClick={() => setParams("complete")}>
+                    Complete
+                  </TabsTrigger>
                 </TabsList>
                 <TabsContent value="open">
                   <div className="grid grid-cols-1 gap-4">
@@ -220,7 +245,7 @@ export default function Home() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction disabled={!appId} onClick={handleJoinGroup}>
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Continue
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Continue
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

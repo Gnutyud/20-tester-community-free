@@ -29,11 +29,12 @@ import axios from "axios";
 import dayjs from "dayjs";
 import { Bell, Copy } from "lucide-react";
 import Image from "next/image";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { toast } from "react-hot-toast";
 import Loading from "./loading";
-import { redirect } from "next/navigation";
+import { redirect, usePathname, useRouter, useSearchParams } from "next/navigation";
+
+type TabName = "testing" | "confirm" | "tested";
 
 function GroupDetails({ params }: { params: { id: string } }) {
   const id = params.id;
@@ -43,8 +44,10 @@ function GroupDetails({ params }: { params: { id: string } }) {
   const [imageUrl, setImageUrl] = useState<string>("");
   const [imageUploadMethod, setImageUploadMethod] = useState<"link" | "upload">("link");
   const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
   const tabName = searchParams.get("tab");
-  const [defaultTab, setDefaultTab] = useState<"testing" | "confirm" | "tested">(
+  const [defaultTab, setDefaultTab] = useState<TabName>(
     tabName === "confirm" ? "confirm" : tabName === "tested" ? "tested" : "testing"
   );
   const [showConfirm, setShowConfirm] = useState<boolean>(false);
@@ -94,6 +97,22 @@ function GroupDetails({ params }: { params: { id: string } }) {
   useEffect(() => {
     fetchGroup();
   }, [id]);
+
+  // searchParams with a provided key/value pair
+  const createQueryString = useCallback(
+    (name: string, value: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set(name, value);
+
+      return params.toString();
+    },
+    [searchParams]
+  );
+
+  const setParams = (value: TabName) => {
+    // <pathname>?tab=testing
+    router.push(pathname + "?" + createQueryString("tab", value));
+  };
 
   const onCopy = (url?: string) => {
     if (url) {
@@ -177,9 +196,9 @@ function GroupDetails({ params }: { params: { id: string } }) {
           {group?.status !== StatusTypes.INPROGRESS && group?.status !== StatusTypes.COMPLETE && (
             <Tabs defaultValue={defaultTab} className="w-full">
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="testing">Todo</TabsTrigger>
-                <TabsTrigger value="confirm">Confirm</TabsTrigger>
-                <TabsTrigger value="tested">Tested</TabsTrigger>
+                <TabsTrigger value="testing" onClick={() => setParams("testing")}>Todo</TabsTrigger>
+                <TabsTrigger value="confirm" onClick={() => setParams("confirm")}>Confirm</TabsTrigger>
+                <TabsTrigger value="tested" onClick={() => setParams("tested")}>Tested</TabsTrigger>
               </TabsList>
               <TabsContent value="testing">
                 {TODO_APPS.length > 0 ? (
