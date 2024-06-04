@@ -9,7 +9,7 @@ export function cn(...inputs: ClassValue[]) {
 export const timeCalculation = (endDate: string) => {
   let currentDayTime = new Date().getTime();
   const endDay = new Date(endDate);
-  endDay.setDate(endDay.getDate() + 14);
+  endDay.setDate(endDay.getDate() + Number(process.env.NUMBER_OF_DAYS_TO_COMPLETE || 14));
   const totalRemaining = endDay.getTime() - currentDayTime;
   
   currentDayTime += 1000;

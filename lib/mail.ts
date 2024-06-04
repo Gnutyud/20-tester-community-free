@@ -68,7 +68,7 @@ export const sendNotiDoneStep2 = async (email: string, groupId: number) => {
     from: "20 Tester Community <no-reply@20testercommunity.com>",
     to: email,
     subject: "All members are already became testers!",
-    html: `<p>Congratulations! You have almost completed the required 20 tests on Google Play. Just keep testing members's apps every day for 14 days from now.</p><p>Click <a href="${groupLink}">here</a> to see the group status and how many days remain until it is complete.</p>`,
+    html: `<p>Congratulations! You have almost completed the required 20 tests on Google Play. Just keep testing members's apps every day for ${Number(process.env.NUMBER_OF_DAYS_TO_COMPLETE || 14)} days from now.</p><p>Click <a href="${groupLink}">here</a> to see the group status and how many days remain until it is complete.</p>`,
   });
 };
 

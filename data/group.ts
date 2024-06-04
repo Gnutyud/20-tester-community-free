@@ -60,7 +60,7 @@ export const checkAndUpdateGroupStatus = async (groupId: number): Promise<void> 
         },
       });
       // push notification to all members to start testing each other's apps
-      const notificationMessage = `Congratulations! You have almost completed the required 20 tests on Google Play. Just keep testing members's apps every day for 14 days from now to complete the group test.`;
+      const notificationMessage = `Congratulations! You have almost completed the required 20 tests on Google Play. Just keep testing members's apps every day for ${Number(process.env.NUMBER_OF_DAYS_TO_COMPLETE || 14)} days from now to complete the group test.`;
       for (const user of group.GroupUser) {
         // Create a notification for each user in the group
         await db.notification.create({
@@ -76,7 +76,7 @@ export const checkAndUpdateGroupStatus = async (groupId: number): Promise<void> 
       const memberEmailList = (group.GroupUser.map((groupUser) => groupUser.user.email || "") || []).toString();
       await sendNotiDoneStep2(memberEmailList, groupId);
       // schedule a job to update group status to COMPLETED after 14 days (Step 4)
-      scheduleJob(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), async () => {
+      scheduleJob(new Date(Date.now() + Number(process.env.NUMBER_OF_DAYS_TO_COMPLETE || 14) * 24 * 60 * 60 * 1000), async () => {
         await db.group.update({
           where: { id: groupId },
           data: {
