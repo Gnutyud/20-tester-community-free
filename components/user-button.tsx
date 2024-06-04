@@ -81,10 +81,10 @@ export const UserButton = () => {
               </Badge>}
             </div>
           </DropdownMenuItem>
-          <DropdownMenuItem>
+          {user?.role === UserRole.ADMIN && <DropdownMenuItem>
             <Settings className="mr-2 h-4 w-4" />
             <Link href="/settings">Settings</Link>
-          </DropdownMenuItem>
+          </DropdownMenuItem>}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
@@ -92,7 +92,7 @@ export const UserButton = () => {
             <Users className="mr-2 h-4 w-4" />
             <Link href="/app">Apps</Link>
           </DropdownMenuItem>
-          <DropdownMenuSub>
+          {/* <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <UserPlus className="mr-2 h-4 w-4" />
               <span>Invite users</span>
@@ -109,11 +109,11 @@ export const UserButton = () => {
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
-          </DropdownMenuSub>
-          <DropdownMenuItem>
+          </DropdownMenuSub> */}
+          {/* <DropdownMenuItem>
             <Plus className="mr-2 h-4 w-4" />
             <Link href="/app/create">New App</Link>
-          </DropdownMenuItem>
+          </DropdownMenuItem> */}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <LogoutButton>

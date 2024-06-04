@@ -35,7 +35,8 @@ function NotificationPage() {
     } catch (error) {
       console.log("Failed to update notification.");
     } finally {
-      router.push(`/group/${noti.groupId}`);
+      let url = noti.message.includes("just asked") ? `/group/${noti.groupId}?tab=confirm` : `/group/${noti.groupId}`;
+      router.push(url);
     }
   };
 

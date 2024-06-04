@@ -1,6 +1,7 @@
 "use client";
 
 import { GroupWelcome } from "@/components/group/group-welcome";
+import { ConfirmModal } from "@/components/modal/confirm-modal";
 import { Timer } from "@/components/timer/timer";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -23,14 +24,16 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { UploadImageInputDropzone } from "@/components/upload-image";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { GroupItem } from "@/types";
-import { App, RequestStatus, StatusTypes, Notification } from "@prisma/client";
+import { App, Notification, RequestStatus, StatusTypes } from "@prisma/client";
 import axios from "axios";
 import dayjs from "dayjs";
 import { Bell, Copy } from "lucide-react";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import Loading from "./loading";
+import { redirect } from "next/navigation";
 
 function GroupDetails({ params }: { params: { id: string } }) {
   const id = params.id;
@@ -39,6 +42,18 @@ function GroupDetails({ params }: { params: { id: string } }) {
   const [selectedApp, setSelectedApp] = useState<App | null>(null);
   const [imageUrl, setImageUrl] = useState<string>("");
   const [imageUploadMethod, setImageUploadMethod] = useState<"link" | "upload">("link");
+  const searchParams = useSearchParams();
+  const tabName = searchParams.get("tab");
+  const [defaultTab, setDefaultTab] = useState<"testing" | "confirm" | "tested">(
+    tabName === "confirm" ? "confirm" : tabName === "tested" ? "tested" : "testing"
+  );
+  const [showConfirm, setShowConfirm] = useState<boolean>(false);
+  const [selectedRequest, setSelectedRequest] = useState<{ requestId: number; actionType: RequestStatus } | null>(null);
+  const [confirmLoading, setConfirmLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (group?.users && curentUser?.id && !group.users.some((user) => user.id === curentUser.id)) redirect("/");
+  }, [curentUser, group?.users]);
 
   const COMBINE_APPS = group?.apps.map((app) => {
     let myRequest = group?.confirmRequests.find(
@@ -111,18 +126,32 @@ function GroupDetails({ params }: { params: { id: string } }) {
     }
   };
 
-  const handleConfirm = async (requestId: number, actionType: RequestStatus) => {
+  const handleConfirm = async () => {
     try {
+      if (!selectedRequest) {
+        setShowConfirm(false);
+        return;
+      }
+      setConfirmLoading(true);
+      const { requestId, actionType } = selectedRequest;
       await axios.post("/api/request/confirm", {
         requestId,
         actionType,
         groupId: group?.id,
       });
       toast.success("Send response successfully.");
+      handleCancelRequest();
       fetchGroup();
     } catch (error) {
       toast.error("Failed to confirm request.");
+      handleCancelRequest();
     }
+  };
+
+  const handleCancelRequest = () => {
+    setSelectedRequest(null);
+    setShowConfirm(false);
+    setConfirmLoading(false);
   };
 
   const makeAllAsRead = async (notifications: Notification[]) => {
@@ -146,7 +175,7 @@ function GroupDetails({ params }: { params: { id: string } }) {
       <div className="grid grid-cols-1 md:grid-cols-5 gap-8 py-4">
         <div className="md:col-span-3">
           {group?.status !== StatusTypes.INPROGRESS && group?.status !== StatusTypes.COMPLETE && (
-            <Tabs defaultValue="testing" className="w-full">
+            <Tabs defaultValue={defaultTab} className="w-full">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="testing">Todo</TabsTrigger>
                 <TabsTrigger value="confirm">Confirm</TabsTrigger>
@@ -196,13 +225,19 @@ function GroupDetails({ params }: { params: { id: string } }) {
                           <>
                             <Button
                               className="mr-2 bg-red-800 text-white"
-                              onClick={() => handleConfirm(request.id, RequestStatus.REJECTED)}
+                              onClick={() => {
+                                setSelectedRequest({ requestId: request.id, actionType: RequestStatus.REJECTED });
+                                setShowConfirm(true);
+                              }}
                             >
                               {"Reject"}
                             </Button>
                             <Button
                               className="bg-green-800 text-white"
-                              onClick={() => handleConfirm(request.id, RequestStatus.ACCEPTED)}
+                              onClick={() => {
+                                setSelectedRequest({ requestId: request.id, actionType: RequestStatus.ACCEPTED });
+                                setShowConfirm(true);
+                              }}
                             >
                               {"Confirm"}
                             </Button>
@@ -432,6 +467,13 @@ function GroupDetails({ params }: { params: { id: string } }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <ConfirmModal
+        open={showConfirm}
+        onClose={handleCancelRequest}
+        onConfirm={handleConfirm}
+        content={`This action cannot be undone.`}
+        loading={confirmLoading}
+      />
     </div>
   );
 }

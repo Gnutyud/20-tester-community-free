@@ -110,7 +110,7 @@ export const sendConfirmTesterEmail = async (
   approvalUserName: string,
   approvalUserMail: string
 ) => {
-  const groupLink = `${domain}/group/${groupId}`;
+  const groupLink = `${domain}/group/${groupId}?tab=confirm`;
   await transporter.sendMail({
     from: "20 Tester Community <no-reply@20testercommunity.com>",
     to: email,

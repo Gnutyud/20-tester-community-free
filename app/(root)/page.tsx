@@ -19,9 +19,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { GroupItem, StatusTypes } from "@/types";
 import axios from "axios";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import Loading from "./loading";
@@ -35,6 +35,11 @@ export default function Home() {
   const router = useRouter();
   const [apps, setApps] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const searchParams = useSearchParams();
+  const tabName = searchParams.get("tab");
+  const [defaultTab, setDefaultTab] = useState<"open" | "inprogress" | "complete">(
+    tabName === "inprogress" ? "inprogress" : tabName === "complete" ? "complete" : "open"
+  );
 
   const openData = groupData.filter((data) => data.status === StatusTypes.OPEN);
   const inprogressData = groupData.filter(
@@ -76,20 +81,23 @@ export default function Home() {
   const handleJoinGroup = async () => {
     try {
       if (!curentUser) {
-        router.push("/auth/login");
+        router.push(`/auth/login`);
       } else {
+        setLoading(true);
         await axios.post(`/api/group/${groupId}`, {
           appId: appId,
         });
         toast.success("Joined group successfully");
+        setIsOpen(false);
+        setGroupId(null);
+        setLoading(false);
         router.push(`/group/${groupId}`);
       }
-      setIsOpen(false);
-      setGroupId(null);
     } catch (error) {
       toast.error("Error joining group");
       setIsOpen(false);
       setGroupId(null);
+      setLoading(false);
     }
   };
 
@@ -116,7 +124,7 @@ export default function Home() {
                   </AlertDescription>
                 </Alert>
               )}
-              <Tabs defaultValue="open" className="w-full">
+              <Tabs defaultValue={defaultTab} className="w-full">
                 <TabsList>
                   <TabsTrigger value="open">Open</TabsTrigger>
                   <TabsTrigger value="inprogress">Inprogress</TabsTrigger>
@@ -212,7 +220,7 @@ export default function Home() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction disabled={!appId} onClick={handleJoinGroup}>
-              Continue
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Continue
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
