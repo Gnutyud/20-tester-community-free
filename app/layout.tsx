@@ -12,6 +12,12 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "20 Tester Community",
   description: "Pass 20 tester Google Play Console required by our community",
+  icons: {
+    icon: ['/favicon.ico?v=4'],
+    apple: ['/apple-touch-icon.png?v=4'],
+    shortcut: ['/apple-touch-icon.png'],
+  },
+  manifest: '/site.webmanifest',
 };
 
 export default async function RootLayout({
