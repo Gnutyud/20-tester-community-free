@@ -4,8 +4,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "mongodb"
-  url       = env("DATABASE_URL")
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
 }
 
 enum UserRole {
@@ -50,13 +50,13 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refreshToken      String?
-  accessToken       String?
-  expiresAt         Int?
-  tokenType         String?
+  refresh_token     String? @db.String
+  access_token      String? @db.String
+  expires_at        Int?
+  token_type        String?
   scope             String?
-  idToken           String?
-  sessionState      String?
+  id_token          String? @db.String
+  session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -91,35 +91,35 @@ model TwoFactorToken {
 }
 
 model TwoFactorConfirmation {
-  id      String @id @default(auto()) @map("_id") @db.ObjectId
-  userId  String @db.ObjectId
-  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId])
 }
 
 model Notification {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  groupId   String   @db.ObjectId
-  userId    String   @db.ObjectId
-  message   String
-  title     String
-  unread    Boolean  @default(true)
-  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id      String  @id @default(auto()) @map("_id") @db.ObjectId
+  groupId String  @db.ObjectId
+  userId  String  @db.ObjectId
+  message String
+  title   String
+  unread  Boolean @default(true)
+  group   Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model App {
-  id             String    @id @default(auto()) @map("_id") @db.ObjectId
-  userId         String    @db.ObjectId
+  id             String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String      @db.ObjectId
   packageName    String
   appName        String
   installUrl     String
   googleGroupUrl String
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   groupApps      GroupApps[]
 
   createdAt DateTime @default(now())
@@ -127,14 +127,14 @@ model App {
 }
 
 model Group {
-  id              String          @id @default(auto()) @map("_id") @db.ObjectId
-  maxMembers      Int             @default(20)
-  status          StatusTypes     @default(OPEN)
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  maxMembers      Int            @default(20)
+  status          StatusTypes    @default(OPEN)
   startedTestDate DateTime?
   groupUsers      GroupUser[]
   groupApps       GroupApps[]
   notifications   Notification[]
-  confirmRequests Request[]       // Tracks confirmation requests within the group
+  confirmRequests Request[] // Tracks confirmation requests within the group
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -152,8 +152,8 @@ model GroupApps {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
   groupId String @db.ObjectId
   appId   String @db.ObjectId
-  group   Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  app     App   @relation(fields: [appId], references: [id], onDelete: Cascade)
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  app     App    @relation(fields: [appId], references: [id], onDelete: Cascade)
 
   @@unique([groupId, appId])
 }
