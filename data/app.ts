@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 
-export const getGroupAppsAndRequests = async (groupId: number, userId: string) => {
+export const getGroupAppsAndRequests = async (groupId: string, userId: string) => {
     try {
       // Retrieve all apps in the group
       const groupApps = await db.groupApps.findMany({

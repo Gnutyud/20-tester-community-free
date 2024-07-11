@@ -37,7 +37,6 @@ function NewGroup() {
   });
 
   const onSubmit = (values: z.infer<typeof NewGroupSchema>) => {
-    console.log(values);
     startTransition(() => {
       createNewGroup(values)
         .then((data) => {

@@ -147,7 +147,7 @@ const GroupCard = ({ id, maxMembers, status, users, becameTesterNumber, startedT
                 <TooltipTrigger asChild>
                   <Avatar className="inline-block h-8 w-8 rounded-full ring-2 ring-white">
                     <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback>{user.name}</AvatarFallback>
+                    <AvatarFallback>{user?.name?.charAt(0)?.toUpperCase()}</AvatarFallback>
                   </Avatar>
                 </TooltipTrigger>
                 <TooltipContent>

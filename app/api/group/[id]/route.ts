@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   try {
-    const groupId = Number(params.id);
+    const groupId = params.id;
     const { appId } = await req.json();
     const user = await currentUser();
 
@@ -45,9 +45,9 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     await joinGroup(appId, groupId);
 
     // Send notification to all members in the group about the new member
-    if (user && group?.GroupUser) {
+    if (user && group?.groupUsers) {
       const notificationMessage = `${user.name} has joined the group.`;
-      for (const user of group.GroupUser) {
+      for (const user of group.groupUsers) {
         // Create a notification for each user in the group
         await db.notification.create({
           data: {
@@ -59,7 +59,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         });
       }
       // send email to all group members
-      const memberEmailList = (group.GroupUser.map((groupUser) => groupUser.user.email || "") || []).toString();
+      const memberEmailList = (group.groupUsers.map((groupUser) => groupUser.user.email || "") || []).toString();
       await sendNotiNewMemberJoin(memberEmailList, user?.name || user?.email || "");
     }
 
@@ -77,7 +77,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
     const user = await currentUser();
-    const groupId = Number(params.id);
+    const groupId = params.id;
     const group = await getGroupById(groupId);
     const apps = await getGroupAppsAndRequests(groupId, user?.id || "");
 
