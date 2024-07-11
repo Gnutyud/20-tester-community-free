@@ -75,7 +75,7 @@ export const NewGroupSchema = z.object({
   maxMembers: z.coerce.number().int().min(2, {
     message: "Minimum of 2 member required",
   }),
-  appId: z.coerce.number().int(),
+  appId: z.string(),
 });
 
 export const NewAppSchema = z.object({
@@ -96,7 +96,7 @@ export const NewAppSchema = z.object({
   ),
   googleGroupUrl: z.string().refine(
     (url) => {
-      const regex = /^https?:\/\/groups\.google\.com\/g\/[\w-]+\/?$/;
+      const regex = /^https:\/\/groups\.google\.com/;
       return regex.test(url);
     },
     {

@@ -52,7 +52,7 @@ export const sendNotiNewMemberJoin = async (email: string, memberName: string) =
   });
 };
 
-export const sendNotiDoneStep1 = async (email: string, groupId: number) => {
+export const sendNotiDoneStep1 = async (email: string, groupId: string) => {
   const groupLink = `${domain}/group/${groupId}`;
   await transporter.sendMail({
     from: "20 Tester Community <no-reply@20testercommunity.com>",
@@ -62,7 +62,7 @@ export const sendNotiDoneStep1 = async (email: string, groupId: number) => {
   });
 };
 
-export const sendNotiDoneStep2 = async (email: string, groupId: number) => {
+export const sendNotiDoneStep2 = async (email: string, groupId: string) => {
   const groupLink = `${domain}/group/${groupId}`;
   await transporter.sendMail({
     from: "20 Tester Community <no-reply@20testercommunity.com>",
@@ -83,7 +83,7 @@ export const sendNotiDoneStep3 = async (email: string) => {
 
 export const sendRequestBecameTesterEmail = async (
   email: string,
-  groupId: number,
+  groupId: string,
   requestUserName: string,
   imageUrl: string
 ) => {
