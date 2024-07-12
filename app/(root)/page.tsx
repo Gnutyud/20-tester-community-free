@@ -31,7 +31,7 @@ type TabName = "open" | "inprogress" | "complete";
 export default function Home() {
   const [groupData, setGroupData] = useState<GroupItem[]>([]);
   const [groupId, setGroupId] = useState<number | null>(null);
-  const [appId, setAppId] = useState<number | null>(null);
+  const [appId, setAppId] = useState<string>();
   const [open, setIsOpen] = useState<boolean>(false);
   const curentUser = useCurrentUser();
   const router = useRouter();
@@ -229,13 +229,13 @@ export default function Home() {
             <AlertDialogDescription>
               This action cannot be undone. This will add your app to the group and start testing.
             </AlertDialogDescription>
-            <Select onValueChange={(value) => setAppId(Number(value))} defaultValue={appId?.toString()}>
+            <Select onValueChange={(value) => setAppId(value)} defaultValue={appId}>
               <SelectTrigger>
                 <SelectValue placeholder="Select your app to join this group" />
               </SelectTrigger>
               <SelectContent>
                 {apps?.map((app) => (
-                  <SelectItem key={app.id} value={app.id.toString()}>
+                  <SelectItem key={app.id} value={app.id}>
                     {app.appName}
                   </SelectItem>
                 ))}
