@@ -231,7 +231,7 @@ function GroupDetails({ params }: { params: { id: string } }) {
   return (
     <div className="py-4">
       <GroupWelcome
-        name={id}
+        name={group.groupNumber}
         maxMembers={group.maxMembers}
         status={group.status}
         members={group.users.length}

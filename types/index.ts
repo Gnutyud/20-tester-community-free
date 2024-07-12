@@ -10,6 +10,7 @@ export enum StatusTypes {
 export interface GroupItem {
   id: number;
   maxMembers: number;
+  groupNumber: number;
   status: StatusTypes;
   users: { id: string; email: string; avatar: string; name: string }[];
   becameTesterNumber: number;

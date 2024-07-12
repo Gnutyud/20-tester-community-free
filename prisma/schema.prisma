@@ -128,6 +128,7 @@ model App {
 
 model Group {
   id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  groupNumber     Int            @default(1)
   maxMembers      Int            @default(20)
   status          StatusTypes    @default(OPEN)
   startedTestDate DateTime?
@@ -171,4 +172,10 @@ model Request {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Counter {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  model    String @unique
+  sequence Int
 }

@@ -10,6 +10,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 interface GroupCardProps extends Omit<GroupItem, "notifications" | "apps" | "confirmRequests"> {
   onJoin?: (groupId: number) => void;
+  groupNumber: number;
 }
 
 const StepListing = ({
@@ -69,7 +70,7 @@ const StepListing = ({
   );
 };
 
-const GroupCard = ({ id, maxMembers, status, users, becameTesterNumber, startedTestDate, onJoin }: GroupCardProps) => {
+const GroupCard = ({ id, maxMembers, status, users, becameTesterNumber, startedTestDate, onJoin, groupNumber }: GroupCardProps) => {
   const numberOfDaysInTest = startedTestDate ? dayjs().diff(dayjs(startedTestDate), "day") : 0;
   const curentUser = useCurrentUser();
   const router = useRouter();
@@ -90,7 +91,7 @@ const GroupCard = ({ id, maxMembers, status, users, becameTesterNumber, startedT
     <>
       <div className="w-full p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
         <div className="flex flex-row items-center justify-between">
-          <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{`Group #${id}`}</h5>
+          <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{`Group #${groupNumber}`}</h5>
           <div>
             {status === StatusTypes.OPEN && (
               <span className="bg-gray-100 text-gray-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-full dark:bg-gray-700 dark:text-gray-300">

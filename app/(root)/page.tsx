@@ -53,7 +53,7 @@ export default function Home() {
   useEffect(() => {
     const fetchGroupData = async () => {
       try {
-        const response: { data: GroupItem[] } = await axios.get("/api/group");
+        const response: { data: GroupItem[] } = await axios.post("/api/group");
         setGroupData(response.data);
         setLoading(false);
       } catch (error) {
@@ -172,6 +172,7 @@ export default function Home() {
                         becameTesterNumber={group.becameTesterNumber}
                         startedTestDate={group.startedTestDate}
                         onJoin={onSelectGroupToJoin}
+                        groupNumber={group.groupNumber}
                       />
                     ))}
                   </div>
@@ -192,6 +193,7 @@ export default function Home() {
                         users={group.users}
                         becameTesterNumber={group.becameTesterNumber}
                         startedTestDate={group.startedTestDate}
+                        groupNumber={group.groupNumber}
                       />
                     ))}
                   </div>
@@ -212,6 +214,7 @@ export default function Home() {
                         users={group.users}
                         becameTesterNumber={group.becameTesterNumber}
                         startedTestDate={group.startedTestDate}
+                        groupNumber={group.groupNumber}
                       />
                     ))}
                   </div>
