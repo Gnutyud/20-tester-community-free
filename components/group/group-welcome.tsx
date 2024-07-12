@@ -2,7 +2,7 @@ import { StatusTypes } from "@prisma/client";
 import { Hash } from "lucide-react";
 
 interface GroupWelcomeProps {
-  name: string;
+  name: number;
   maxMembers: number;
   status: StatusTypes;
   members: number;

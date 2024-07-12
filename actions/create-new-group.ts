@@ -7,7 +7,9 @@ import { db } from "@/lib/db";
 import { NewGroupSchema } from "@/schemas";
 import { joinGroup } from "@/data/group";
 
-export const createNewGroup = async (values: z.infer<typeof NewGroupSchema>) => {
+export const createNewGroup = async (
+  values: z.infer<typeof NewGroupSchema>
+) => {
   try {
     const validatedFields = NewGroupSchema.safeParse(values);
 
@@ -22,19 +24,41 @@ export const createNewGroup = async (values: z.infer<typeof NewGroupSchema>) => 
       return { error: "User not authenticated!" };
     }
 
+    let groupNumber = 1;
+
+    const existsGroupCounter = await db.counter.findUnique({
+      where: { model: "Group" },
+    });
+
+    if (!existsGroupCounter) {
+      await db.counter.create({
+        data: {
+          model: "Group",
+          sequence: 1,
+        },
+      });
+    } else {
+      groupNumber = existsGroupCounter.sequence + 1;
+      await db.counter.update({
+        where: { model: "Group" },
+        data: { sequence: groupNumber },
+      });
+    }
+
     // Create the group in the database
     const newGroup = await db.group.create({
       data: {
         maxMembers,
         groupUsers: {
           create: {
-            user: { connect: { id: user.id } }
-          }
-        }
+            user: { connect: { id: user.id } },
+          },
+        },
+        groupNumber: groupNumber,
       },
       include: {
-        groupUsers: true
-      }
+        groupUsers: true,
+      },
     });
 
     // Add the selected app to the group
@@ -42,7 +66,7 @@ export const createNewGroup = async (values: z.infer<typeof NewGroupSchema>) => 
 
     return { success: "Create new group success!" };
   } catch (error) {
-    console.error('Error creating new group:', error);
+    console.error("Error creating new group:", error);
     return { error: "Internal server error" };
   }
 };
