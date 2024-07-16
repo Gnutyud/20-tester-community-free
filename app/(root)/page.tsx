@@ -14,7 +14,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Container } from "@/components/ui/container";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { GroupItem, StatusTypes } from "@/types";
@@ -41,14 +47,21 @@ export default function Home() {
   const searchParams = useSearchParams();
   const tabName = searchParams.get("tab");
   const [defaultTab, setDefaultTab] = useState<TabName>(
-    tabName === "inprogress" ? "inprogress" : tabName === "complete" ? "complete" : "open"
+    tabName === "inprogress"
+      ? "inprogress"
+      : tabName === "complete"
+      ? "complete"
+      : "open"
   );
 
   const openData = groupData.filter((data) => data.status === StatusTypes.OPEN);
   const inprogressData = groupData.filter(
-    (data) => data.status !== StatusTypes.OPEN && data.status !== StatusTypes.COMPLETE
+    (data) =>
+      data.status !== StatusTypes.OPEN && data.status !== StatusTypes.COMPLETE
   );
-  const completeData = groupData.filter((data) => data.status === StatusTypes.COMPLETE);
+  const completeData = groupData.filter(
+    (data) => data.status === StatusTypes.COMPLETE
+  );
 
   useEffect(() => {
     const fetchGroupData = async () => {
@@ -128,7 +141,7 @@ export default function Home() {
     <>
       <main>
         <Container>
-          <section className="grid grid-cols-4 gap-8 py-4">
+          <section className="grid grid-cols-1 md:grid-cols-4 gap-8 py-4">
             <div className="col-span-3">
               {!apps.length && (
                 <Alert className="mb-4">
@@ -148,10 +161,16 @@ export default function Home() {
                   <TabsTrigger value="open" onClick={() => setParams("open")}>
                     Open
                   </TabsTrigger>
-                  <TabsTrigger value="inprogress" onClick={() => setParams("inprogress")}>
+                  <TabsTrigger
+                    value="inprogress"
+                    onClick={() => setParams("inprogress")}
+                  >
                     Inprogress
                   </TabsTrigger>
-                  <TabsTrigger value="complete" onClick={() => setParams("complete")}>
+                  <TabsTrigger
+                    value="complete"
+                    onClick={() => setParams("complete")}
+                  >
                     Complete
                   </TabsTrigger>
                 </TabsList>
@@ -221,18 +240,26 @@ export default function Home() {
                 </TabsContent>
               </Tabs>
             </div>
-            <Sidebar />
+            <div className="hidden md:block">
+              <Sidebar />
+            </div>
           </section>
         </Container>
       </main>
       <AlertDialog open={open} onOpenChange={setIsOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Select your app to join this group</AlertDialogTitle>
+            <AlertDialogTitle>
+              Select your app to join this group
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will add your app to the group and start testing.
+              This action cannot be undone. This will add your app to the group
+              and start testing.
             </AlertDialogDescription>
-            <Select onValueChange={(value) => setAppId(value)} defaultValue={appId}>
+            <Select
+              onValueChange={(value) => setAppId(value)}
+              defaultValue={appId}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select your app to join this group" />
               </SelectTrigger>
@@ -248,7 +275,8 @@ export default function Home() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction disabled={!appId} onClick={handleJoinGroup}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Continue
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{" "}
+              Continue
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

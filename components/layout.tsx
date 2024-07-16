@@ -6,7 +6,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <div className="flex-1">{children}</div>
+      <div className="flex-1 px-4">{children}</div>
       <Footer />
     </div>
   );

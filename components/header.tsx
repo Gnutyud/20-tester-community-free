@@ -6,19 +6,24 @@ import { DarkModeDropDown } from "./dark-mode-drop-down";
 import { Button } from "./ui/button";
 import { UserButton } from "./user-button";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import Image from 'next/image'
+import logo from '../public/android-chrome-192x192.png'
 
 export const Header = () => {
   const router = useRouter();
   const user = useCurrentUser();
   return (
     <div className="w-full flex justify-center shadow dark:bg-gray-800 bg-white">
-      <div className="lg:max-w-6xl lg:w-full">
+      <div className="md:max-w-6xl w-full px-4">
         <div className="flex items-center justify-between font-mono text-sm lg:flex py-4 ">
-          <Link href={"/"} className="text-3xl font-extrabold text-gray-900 dark:text-white">
+          <Link href={"/"} className="text-3xl font-extrabold text-gray-900 dark:text-white hidden md:block">
             <span className="text-transparent bg-clip-text bg-gradient-to-r to-emerald-600 from-sky-400">
               20 Tester
             </span>{" "}
             Community
+          </Link>
+          <Link href={"/"} className="md:hidden mr-4">
+            <Image src={logo} alt="20 tester community free logo" width={50} height={50}/>
           </Link>
 
           <div className="flex items-center justify-between">

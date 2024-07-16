@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { timeCalculation } from "@/lib/utils";
 
 export const Timer = ({ endDate }: { endDate: string }) => {
-  const [countdown, setCountdown] = useState(() => timeCalculation(endDate) || []);
+  const [countdown, setCountdown] = useState(
+    () => timeCalculation(endDate) || []
+  );
   const timerID = ["days", "hours", "minutes", "seconds"];
 
   useEffect(() => {
@@ -19,12 +21,18 @@ export const Timer = ({ endDate }: { endDate: string }) => {
   return (
     <div>
       {countdown.length === 0 ? (
-        <p className="font-red-hat text-4xl text-white duration-300	ease-in">Some thing went wrong!</p>
+        <p className="font-red-hat text-4xl text-white duration-300	ease-in">
+          Some thing went wrong!
+        </p>
       ) : (
         <div>
-          <div className="p-4 d-flex justify-center items-center">
-		  <p className="font-red-hat text-4xl dark:text-white duration-300 ease-in text-center text-back">Enjoy this moment!</p>
-		  <p className="font-red-hat text-2xl dark:text-gray-400 duration-300 ease-in text-center text-gray-500">Your app will be done soon, we will let you know later.</p>
+          <div className="py-4 d-flex justify-center items-center">
+            <p className="font-red-hat text-4xl dark:text-white duration-300 ease-in text-center text-back">
+              Enjoy this moment!
+            </p>
+            <p className="font-red-hat text-2xl dark:text-gray-400 duration-300 ease-in text-center text-gray-500">
+              Your app will be done soon, we will let you know later.
+            </p>
           </div>
 
           <div className="grid grid-cols-4 gap-4">
