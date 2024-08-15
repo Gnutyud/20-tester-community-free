@@ -77,7 +77,7 @@ function NewGroup() {
                       <SelectItem value="10">10</SelectItem>
                       <SelectItem value="15">15</SelectItem>
                       <SelectItem value="20">20</SelectItem>
-                      <SelectItem value="20">25</SelectItem>
+                      <SelectItem value="25">25</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
