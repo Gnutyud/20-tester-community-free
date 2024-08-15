@@ -6,6 +6,7 @@ import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { NewGroupSchema } from "@/schemas";
 import { joinGroup } from "@/data/group";
+import { StatusTypes } from "@prisma/client";
 
 export const createNewGroup = async (
   values: z.infer<typeof NewGroupSchema>
@@ -23,6 +24,15 @@ export const createNewGroup = async (
     if (!user) {
       return { error: "User not authenticated!" };
     }
+
+    const existingOpenGroupWithMaxMembers = await db.group.findFirst({
+      where: { maxMembers: maxMembers, status: StatusTypes.OPEN },
+    });
+
+    if (existingOpenGroupWithMaxMembers)
+      return {
+        error: `We already have a group with maxMembers: ${maxMembers} is OPEN. Please join it instead of create a new one!`,
+      };
 
     let groupNumber = 1;
 
