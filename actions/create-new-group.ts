@@ -61,10 +61,11 @@ export const createNewGroup = async (
         maxMembers,
         groupUsers: {
           create: {
-            user: { connect: { id: user.id } },
+            user: { connect: { id: user.id! } },
           },
         },
         groupNumber: groupNumber,
+        ownerId: user.id!,
       },
       include: {
         groupUsers: true,

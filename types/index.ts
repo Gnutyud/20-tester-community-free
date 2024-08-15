@@ -18,4 +18,10 @@ export interface GroupItem {
   notifications: Notification[];
   apps: App[];
   confirmRequests: Request[];
+  ownerId?: string;
+}
+
+export enum GroupActions {
+  JOIN = "join",
+  LEAVE = "leave",
 }

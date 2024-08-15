@@ -1,87 +1,198 @@
 import { getGroupAppsAndRequests } from "@/data/app";
-import { checkAndUpdateGroupStatus, getGroupById, joinGroup } from "@/data/group";
+import {
+  checkAndUpdateGroupStatus,
+  getGroupById,
+  joinGroup,
+  leaveGroup,
+} from "@/data/group";
 import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { sendNotiNewMemberJoin } from "@/lib/mail";
-import { NextRequest, NextResponse } from "next/server";
+import { sendNotiLeaveGroup, sendNotiNewMemberJoin } from "@/lib/mail";
+import { GroupActions } from "@/types";
+import { UserRole } from "@prisma/client";
+import { NextResponse } from "next/server";
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const groupId = params.id;
-    const { appId } = await req.json();
+    const { action, appId, userId } = await req.json(); // `action` can be 'join' or 'leave'
+
     const user = await currentUser();
-
-    if (!appId) {
-      return new NextResponse("App ID missing", { status: 400 });
-    }
-
     if (!user) {
-      return NextResponse.json({ meassage: "unauthorized" }, { status: 403 });
-    }
-    const userId = user?.id;
-    // Check if the user is already a member of the group
-    const existingGroupUser = await db.groupUser.findFirst({
-      where: {
-        userId: userId,
-        groupId: groupId,
-      },
-    });
-
-    if (existingGroupUser) {
-      return NextResponse.json({ error: "User already joined this group!" }, { status: 400 });
+      return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
     }
 
+    const currentUserId = user?.id;
     const group = await getGroupById(groupId);
 
-    // Add the user as a member of the group
-    await db.groupUser.create({
-      data: {
-        user: { connect: { id: userId } },
-        group: { connect: { id: groupId } },
-      },
-    });
-
-    // Add the selected app to the group
-    await joinGroup(appId, groupId);
-
-    // Send notification to all members in the group about the new member
-    if (user && group?.groupUsers) {
-      const notificationMessage = `${user.name} has joined the group.`;
-      for (const user of group.groupUsers) {
-        // Create a notification for each user in the group
-        await db.notification.create({
-          data: {
-            groupId: groupId,
-            userId: user.user.id,
-            title: "New member join!",
-            message: notificationMessage,
-          },
-        });
+    if (action === GroupActions.JOIN) {
+      if (!appId) {
+        return NextResponse.json(
+          { message: "App ID missing" },
+          { status: 400 }
+        );
       }
-      // send email to all group members
-      const memberEmailList = (group.groupUsers.map((groupUser) => groupUser.user.email || "") || []).toString();
-      await sendNotiNewMemberJoin(memberEmailList, user?.name || user?.email || "");
+
+      // Check if the user is already a member of the group
+      const existingGroupUser = await db.groupUser.findFirst({
+        where: {
+          userId: currentUserId,
+          groupId: groupId,
+        },
+      });
+
+      if (existingGroupUser) {
+        return NextResponse.json(
+          { error: "User already joined this group!" },
+          { status: 400 }
+        );
+      }
+
+      // Add user to the group
+      await db.groupUser.create({
+        data: {
+          user: { connect: { id: currentUserId } },
+          group: { connect: { id: groupId } },
+        },
+      });
+
+      // Add app to the group
+      await joinGroup(appId, groupId);
+
+      // Send notification to all members
+      if (group && group.groupUsers) {
+        const notificationMessage = `${user.name} has joined the group.`;
+        for (const groupUser of group.groupUsers) {
+          await db.notification.create({
+            data: {
+              groupId: groupId,
+              userId: groupUser.user.id,
+              title: "New member joined!",
+              message: notificationMessage,
+            },
+          });
+        }
+        // Send email to all group members
+        const memberEmailList = group.groupUsers
+          .map((groupUser) => groupUser.user.email || "")
+          .toString();
+        await sendNotiNewMemberJoin(
+          memberEmailList,
+          user?.name || user?.email || ""
+        );
+      }
+
+      // Check and update group status
+      await checkAndUpdateGroupStatus(groupId);
+
+      return NextResponse.json(
+        { success: "User and app joined the group successfully!" },
+        { status: 200 }
+      );
     }
 
-    // Check and update group status
-    await checkAndUpdateGroupStatus(groupId);
+    if (action === GroupActions.LEAVE) {
+      if (!appId) {
+        return NextResponse.json(
+          { message: "App ID missing" },
+          { status: 400 }
+        );
+      }
 
-    console.log("User joined the group successfully.");
-    return NextResponse.json({ success: "User joined the group successfully!" }, { status: 200 });
+      // Determine if this is a kick action (admin/group owner removing another user/app) or self-leave
+      const targetUserId = userId || currentUserId; // If userId is provided, it's a kick; if not, it's self-leave
+      const isKicking = userId && userId !== currentUserId; // Check if the user is trying to kick someone else
+
+      // Ensure only admins or group owners can kick others
+      if (isKicking) {
+        const isAdmin = user.role === UserRole.ADMIN; // Replace this with your admin logic
+        const isGroupOwner = await db.group.findFirst({
+          where: {
+            id: groupId,
+            ownerId: currentUserId, // Check if current user is the group owner
+          },
+        });
+
+        if (!isAdmin && !isGroupOwner) {
+          return NextResponse.json(
+            { message: "Not authorized to kick users" },
+            { status: 403 }
+          );
+        }
+      }
+
+      // Remove the app and user from the group
+      await leaveGroup(appId, groupId, targetUserId);
+
+      // Check and update group status
+      await checkAndUpdateGroupStatus(groupId);
+
+      // Send notification to all members
+      if (group && group.groupUsers) {
+        const notificationMessage = `${user.name} has ${
+          isKicking ? "been kicked from" : "left"
+        } the group.`;
+        for (const groupUser of group.groupUsers) {
+          if (groupUser.userId !== targetUserId) {
+            await db.notification.create({
+              data: {
+                groupId: groupId,
+                userId: groupUser.user.id,
+                title: isKicking ? "Member Kicked Out!" : "Member Left!",
+                message: notificationMessage,
+              },
+            });
+          }
+        }
+        // Send email to all group members
+        const memberEmailList = group.groupUsers
+          .filter((user) => user.userId !== targetUserId)
+          .map((groupUser) => groupUser.user.email || "")
+          .toString();
+        await sendNotiLeaveGroup(
+          memberEmailList,
+          user?.name || user?.email || "",
+          isKicking
+        );
+      }
+
+      if (isKicking) {
+        return NextResponse.json(
+          { success: "User kicked from the group successfully!" },
+          { status: 200 }
+        );
+      } else {
+        return NextResponse.json(
+          { success: "User/app left the group successfully!" },
+          { status: 200 }
+        );
+      }
+    }
+
+    return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (error: any) {
-    console.error(`Failed to join the group: ${error.message}`);
-    throw error;
+    console.error(`Failed to handle group action: ${error.message}`);
+    return NextResponse.json(
+      { error: `Failed to handle group action: ${error.message}` },
+      { status: 500 }
+    );
   }
 }
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const user = await currentUser();
     const groupId = params.id;
     const group = await getGroupById(groupId);
     const apps = await getGroupAppsAndRequests(groupId, user?.id || "");
 
-    return NextResponse.json({...group, apps}, { status: 200 });
+    return NextResponse.json({ ...group, apps }, { status: 200 });
   } catch (error: any) {
     console.error(`Failed to get group by ID: ${error.message}`);
     throw error;
