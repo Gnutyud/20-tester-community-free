@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { GroupItem, StatusTypes } from "@/types";
+import { GroupActions, GroupItem, StatusTypes } from "@/types";
 import axios from "axios";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -31,6 +31,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import Loading from "./loading";
+import LoadingPage from "@/components/loading-page";
 
 type TabName = "open" | "inprogress" | "complete";
 
@@ -43,6 +44,7 @@ export default function Home() {
   const router = useRouter();
   const [apps, setApps] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [loadingJoin, setLoadingJoin] = useState<boolean>(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const tabName = searchParams.get("tab");
@@ -115,21 +117,24 @@ export default function Home() {
       if (!curentUser) {
         router.push(`/auth/login`);
       } else {
-        setLoading(true);
-        await axios.post(`/api/group/${groupId}`, {
-          appId: appId,
-        });
-        toast.success("Joined group successfully");
-        setIsOpen(false);
-        setGroupId(null);
-        setLoading(false);
-        router.push(`/group/${groupId}`);
+        if (groupId) {
+          setLoadingJoin(true);
+          await axios.post(`/api/group/${groupId}`, {
+            appId: appId,
+            action: GroupActions.JOIN,
+          });
+          toast.success("Joined group successfully");
+          setIsOpen(false);
+          setGroupId(null);
+          setLoadingJoin(false);
+          router.push(`/group/${groupId}`);
+        }
       }
     } catch (error) {
       toast.error("Error joining group");
       setIsOpen(false);
       setGroupId(null);
-      setLoading(false);
+      setLoadingJoin(false);
     }
   };
 
@@ -139,6 +144,7 @@ export default function Home() {
 
   return (
     <>
+      {loadingJoin && <LoadingPage text="Joining to group..." />}
       <main>
         <Container>
           <section className="grid grid-cols-1 md:grid-cols-4 gap-8 py-4">

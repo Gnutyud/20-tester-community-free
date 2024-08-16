@@ -1,6 +1,7 @@
 "use client";
 
 import { GroupWelcome } from "@/components/group/group-welcome";
+import LoadingPage from "@/components/loading-page";
 import { ConfirmModal } from "@/components/modal/confirm-modal";
 import { Timer } from "@/components/timer/timer";
 import {
@@ -20,6 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   HoverCard,
@@ -36,22 +38,26 @@ import {
 } from "@/components/ui/tooltip";
 import { UploadImageInputDropzone } from "@/components/upload-image";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { GroupItem } from "@/types";
-import { App, Notification, RequestStatus, StatusTypes } from "@prisma/client";
+import { GroupActions, GroupItem } from "@/types";
+import {
+  App,
+  Notification,
+  RequestStatus,
+  StatusTypes,
+  UserRole,
+} from "@prisma/client";
 import axios from "axios";
 import dayjs from "dayjs";
 import { Bell, Copy } from "lucide-react";
-import Image from "next/image";
-import { useEffect, useState, useCallback } from "react";
-import { toast } from "react-hot-toast";
-import Loading from "./loading";
 import {
   redirect,
   usePathname,
   useRouter,
   useSearchParams,
 } from "next/navigation";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
+import Loading from "./loading";
 
 type TabName = "testing" | "confirm" | "tested";
 
@@ -81,31 +87,41 @@ function GroupDetails({ params }: { params: { id: string } }) {
     actionType: RequestStatus;
   } | null>(null);
   const [confirmLoading, setConfirmLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const isOwnerGroup = curentUser?.id === group?.ownerId;
+  const IS_MEMBER = group?.users
+    .map((user) => user.email)
+    .includes(curentUser?.email!);
+  const IS_ADMIN = curentUser?.role === UserRole.ADMIN;
 
   useEffect(() => {
     if (
       group?.users &&
       curentUser?.id &&
-      !group.users.some((user) => user.id === curentUser.id)
+      !group.users.some((user) => user.id === curentUser.id) &&
+      curentUser.role !== UserRole.ADMIN
     )
       redirect("/");
   }, [curentUser, group?.users]);
 
-  const COMBINE_APPS = group?.apps.map((app) => {
-    let myRequest = group?.confirmRequests.find(
-      (request) =>
-        request.userId === curentUser?.id &&
-        request.userRequested === app.userId
-    );
-    if (myRequest)
-      return {
-        ...app,
-        requestSent: true,
-        requestStatus: myRequest?.status,
-        requestId: myRequest?.id,
-      };
-    return app;
-  });
+  const myApp = group?.apps.find((app) => app.userId === curentUser?.id);
+  const COMBINE_APPS = group?.apps
+    .filter((a) => a.userId !== curentUser?.id)
+    .map((app) => {
+      let myRequest = group?.confirmRequests.find(
+        (request) =>
+          request.userId === curentUser?.id &&
+          request.userRequested === app.userId
+      );
+      if (myRequest)
+        return {
+          ...app,
+          requestSent: true,
+          requestStatus: myRequest?.status,
+          requestId: myRequest?.id,
+        };
+      return app;
+    });
   const TESTED_APPS =
     COMBINE_APPS?.filter((app) => (app as any)?.requestStatus === "ACCEPTED") ||
     [];
@@ -224,18 +240,58 @@ function GroupDetails({ params }: { params: { id: string } }) {
     }
   };
 
+  const handleLeaveGroup = async (appId: string, userId?: string) => {
+    try {
+      if (!curentUser) {
+        router.push(`/auth/login`);
+      } else {
+        setLoading(true);
+        await axios.post(`/api/group/${group?.id}`, {
+          appId: appId,
+          action: GroupActions.LEAVE,
+          userId,
+        });
+        toast.success("You left the group successfully!");
+        setLoading(false);
+        router.push("/");
+      }
+    } catch (error) {
+      toast.error("Leave group error");
+      setLoading(false);
+    }
+  };
+
+  const isUserActive = (lastActiveAt: string) => {
+    const lastActiveAtConvert = new Date(lastActiveAt).getTime();
+    const now = Date.now();
+    const activeThreshold = 10 * 60 * 1000; // 10 minutes in milliseconds
+
+    return now - lastActiveAtConvert <= activeThreshold;
+  };
+
   if (!group) {
     return <Loading />;
   }
 
   return (
     <div className="py-4">
-      <GroupWelcome
-        name={group.groupNumber}
-        maxMembers={group.maxMembers}
-        status={group.status}
-        members={group.users.length}
-      />
+      {loading && <LoadingPage text="Leaving..." />}
+      <div className="flex justify-between">
+        <GroupWelcome
+          name={group.groupNumber}
+          maxMembers={group.maxMembers}
+          status={group.status}
+          members={group.users.length}
+        />
+        {IS_MEMBER && (
+          <Button
+            className="text-white bg-red-700 hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-700"
+            onClick={() => handleLeaveGroup(myApp?.id!)}
+          >
+            Leave
+          </Button>
+        )}
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-5 gap-8 py-4">
         <div className="md:col-span-3">
           {group?.status !== StatusTypes.INPROGRESS &&
@@ -246,19 +302,19 @@ function GroupDetails({ params }: { params: { id: string } }) {
                     value="testing"
                     onClick={() => setParams("testing")}
                   >
-                    Todo
+                    Todo ({TODO_APPS.length || 0})
                   </TabsTrigger>
                   <TabsTrigger
                     value="confirm"
                     onClick={() => setParams("confirm")}
                   >
-                    Confirm
+                    Confirm ({COMBINE_REQUESTS_TO_ME.length || 0})
                   </TabsTrigger>
                   <TabsTrigger
                     value="tested"
                     onClick={() => setParams("tested")}
                   >
-                    Tested
+                    Tested ({TESTED_APPS.length || 0})
                   </TabsTrigger>
                 </TabsList>
                 <TabsContent value="testing">
@@ -271,26 +327,43 @@ function GroupDetails({ params }: { params: { id: string } }) {
                         <p className="text-sm font-medium">
                           {app.appName} ({app.packageName})
                         </p>
-                        {!(app as any).requestSent ? (
-                          <Button onClick={() => setSelectedApp(app)}>
-                            {"Click to test"}
-                          </Button>
-                        ) : (app as any)?.requestStatus ===
-                          RequestStatus.REJECTED ? (
-                          <Button
-                            className="bg-green-500 text-white"
-                            onClick={() => setSelectedApp(app)}
-                          >
-                            Re-test
-                          </Button>
-                        ) : (
-                          <Button className="bg-yellow-500 text-white">
-                            {(app as any)?.requestStatus ===
-                            RequestStatus.REJECTED
-                              ? "Re-test"
-                              : (app as any)?.requestStatus}
-                          </Button>
-                        )}
+                        <div>
+                          {(isOwnerGroup ||
+                            curentUser?.role === UserRole.ADMIN) && (
+                            <Button
+                              className="text-white bg-red-700 hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-700 mr-4"
+                              onClick={() =>
+                                handleLeaveGroup(app.id, app.userId)
+                              }
+                            >
+                              Kick
+                            </Button>
+                          )}
+                          {IS_MEMBER && (
+                            <>
+                              {!(app as any).requestSent ? (
+                                <Button onClick={() => setSelectedApp(app)}>
+                                  {"Click to test"}
+                                </Button>
+                              ) : (app as any)?.requestStatus ===
+                                RequestStatus.REJECTED ? (
+                                <Button
+                                  className="bg-green-500 text-white"
+                                  onClick={() => setSelectedApp(app)}
+                                >
+                                  Re-test
+                                </Button>
+                              ) : (
+                                <Button className="bg-yellow-500 text-white">
+                                  {(app as any)?.requestStatus ===
+                                  RequestStatus.REJECTED
+                                    ? "Re-test"
+                                    : (app as any)?.requestStatus}
+                                </Button>
+                              )}
+                            </>
+                          )}
+                        </div>
                       </div>
                     ))
                   ) : (
@@ -397,19 +470,26 @@ function GroupDetails({ params }: { params: { id: string } }) {
           >
             <AccordionItem value="activity">
               <AccordionTrigger>Group activity</AccordionTrigger>
-              <AccordionContent>
+              <AccordionContent className="max-h-[500px] overflow-auto">
                 {group.notifications.length > 0 ? (
-                  group.notifications.map((notification) => (
-                    <Alert className="mb-3" key={notification.id}>
-                      <Bell className="h-4 w-4" />
-                      <AlertTitle>{`${dayjs(notification.createdAt).format(
-                        "MMM D, YYYY h:mm A"
-                      )} - ${notification.title}`}</AlertTitle>
-                      <AlertDescription>
-                        {notification.message}
-                      </AlertDescription>
-                    </Alert>
-                  ))
+                  group.notifications
+                    .sort((a, b) => {
+                      return (
+                        new Date(b.createdAt).getTime() -
+                        new Date(a.createdAt).getTime()
+                      );
+                    })
+                    .map((notification) => (
+                      <Alert className="mb-3" key={notification.id}>
+                        <Bell className="h-4 w-4" />
+                        <AlertTitle>{`${dayjs(notification.createdAt).format(
+                          "MMM D, YYYY h:mm A"
+                        )} - ${notification.title}`}</AlertTitle>
+                        <AlertDescription>
+                          {notification.message}
+                        </AlertDescription>
+                      </Alert>
+                    ))
                 ) : (
                   <div className="text-sm text-muted-foreground">
                     No Activity
@@ -432,7 +512,9 @@ function GroupDetails({ params }: { params: { id: string } }) {
                               src={person.avatar}
                               alt={person.name}
                             />
-                            <AvatarFallback>{person?.name?.charAt(0)?.toUpperCase()}</AvatarFallback>
+                            <AvatarFallback>
+                              {person?.name?.charAt(0)?.toUpperCase()}
+                            </AvatarFallback>
                           </Avatar>
                           <div className="min-w-0 flex-auto">
                             <p className="text-sm font-semibold leading-6">
@@ -445,21 +527,16 @@ function GroupDetails({ params }: { params: { id: string } }) {
                           </div>
                         </div>
                         <div className="hidden shrink-0 sm:flex sm:flex-col sm:items-end">
-                          <p className="text-sm leading-6 ">{"User"}</p>
-                          {person.email === curentUser?.email ? (
-                            <p className="mt-1 text-xs leading-5 text-gray-500">
-                              Last seen{" "}
-                              <time dateTime={"2024/02/28"}>
-                                {"2024/02/28"}
-                              </time>
-                            </p>
-                          ) : (
+                          <p className="text-sm leading-6 ">{person.role}</p>
+                          {person.lastActiveAt && (
                             <div className="mt-1 flex items-center gap-x-1.5">
                               <div className="flex-none rounded-full bg-emerald-500/20 p-1">
                                 <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                               </div>
                               <p className="text-xs leading-5 text-gray-500">
-                                Online
+                                {isUserActive(person.lastActiveAt)
+                                  ? "Online"
+                                  : "Offline"}
                               </p>
                             </div>
                           )}

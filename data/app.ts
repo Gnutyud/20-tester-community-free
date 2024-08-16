@@ -6,14 +6,9 @@ export const getGroupAppsAndRequests = async (groupId: string, userId: string) =
       const groupApps = await db.groupApps.findMany({
         where: {
           groupId,
-          NOT: {
-            app: {
-              userId,
-            },
-          },
         },
         include: {
-          app: true
+          app: true,
         }
       });
   

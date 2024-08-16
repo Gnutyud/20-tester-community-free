@@ -43,12 +43,36 @@ export const sendVerificationEmail = async (email: string, token: string) => {
   });
 };
 
-export const sendNotiNewMemberJoin = async (email: string, memberName: string) => {
+export const sendNotiNewMemberJoin = async (
+  email: string,
+  memberName: string,
+  groupNumber: number
+) => {
   await transporter.sendMail({
     from: "20 Tester Community <no-reply@20testercommunity.com>",
     to: email,
-    subject: "New member join!",
-    html: `<p>${memberName} has joined the group.</p>`,
+    subject: `New member join the Group#${groupNumber}!`,
+    html: `<p>${memberName} has joined the Group#${groupNumber}.</p>`,
+  });
+};
+
+export const sendNotiLeaveGroup = async (
+  emailList: string,
+  memberName: string,
+  isKicking: boolean,
+  groupNumber: number
+) => {
+  const action = isKicking ? "kicked from" : "left";
+  const subject = isKicking
+    ? `A member was kicked from the Group#${groupNumber}`
+    : `A member left the Group#${groupNumber}`;
+  const html = `<p>${memberName} has been ${action} the Group#${groupNumber}.</p>`;
+
+  await transporter.sendMail({
+    from: "20 Tester Community <no-reply@20testercommunity.com>",
+    to: emailList,
+    subject: subject,
+    html: html,
   });
 };
 
@@ -68,7 +92,9 @@ export const sendNotiDoneStep2 = async (email: string, groupId: string) => {
     from: "20 Tester Community <no-reply@20testercommunity.com>",
     to: email,
     subject: "All members are already became testers!",
-    html: `<p>Congratulations! You have almost completed the required 20 tests on Google Play. Just keep testing members's apps every day for ${Number(process.env.NUMBER_OF_DAYS_TO_COMPLETE || 14)} days from now.</p><p>Click <a href="${groupLink}">here</a> to see the group status and how many days remain until it is complete.</p>`,
+    html: `<p>Congratulations! You have almost completed the required 20 tests on Google Play. Just keep testing members's apps every day for ${Number(
+      process.env.NUMBER_OF_DAYS_TO_COMPLETE || 14
+    )} days from now.</p><p>Click <a href="${groupLink}">here</a> to see the group status and how many days remain until it is complete.</p>`,
   });
 };
 

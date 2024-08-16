@@ -42,6 +42,8 @@ model User {
   requests              Request[]              @relation("RequestedUser")
   notifications         Notification[]
   requestsMade          Request[]              @relation("RequestingUser")
+  ownedGroups           Group[]                @relation("GroupOwner")
+  lastActiveAt          DateTime?               @default(now()) // To store the last active timestamp
 }
 
 model Account {
@@ -136,6 +138,8 @@ model Group {
   groupApps       GroupApps[]
   notifications   Notification[]
   confirmRequests Request[] // Tracks confirmation requests within the group
+  ownerId         String         @db.ObjectId
+  owner           User           @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
