@@ -1,3 +1,4 @@
+import { getAccountByUserId } from "@/data/account";
 import { getGroupAppsAndRequests } from "@/data/app";
 import {
   checkAndUpdateGroupStatus,
@@ -5,6 +6,7 @@ import {
   joinGroup,
   leaveGroup,
 } from "@/data/group";
+import { getUserById } from "@/data/user";
 import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { sendNotiLeaveGroup, sendNotiNewMemberJoin } from "@/lib/mail";
@@ -81,7 +83,8 @@ export async function POST(
           .toString();
         await sendNotiNewMemberJoin(
           memberEmailList,
-          user?.name || user?.email || ""
+          user?.name || user?.email || "",
+          group.groupNumber
         );
       }
 
@@ -130,22 +133,25 @@ export async function POST(
       // Check and update group status
       await checkAndUpdateGroupStatus(groupId);
 
+      const targetUserInfo = await getUserById(targetUserId);
+
       // Send notification to all members
       if (group && group.groupUsers) {
-        const notificationMessage = `${user.name} has ${
-          isKicking ? "been kicked from" : "left"
-        } the group.`;
+        const notificationMessage = `${targetUserInfo?.name}<${
+          targetUserInfo?.email
+        }> has ${isKicking ? "been kicked from" : "left"} the group.`;
         for (const groupUser of group.groupUsers) {
-          if (groupUser.userId !== targetUserId) {
-            await db.notification.create({
-              data: {
-                groupId: groupId,
-                userId: groupUser.user.id,
-                title: isKicking ? "Member Kicked Out!" : "Member Left!",
-                message: notificationMessage,
-              },
-            });
-          }
+          await db.notification.create({
+            data: {
+              groupId: groupId,
+              userId: groupUser.user.id,
+              title: isKicking ? "Member Kicked Out!" : "Member Left!",
+              message:
+                groupUser.userId === targetUserId
+                  ? `You have been kicked from the Group#${group.groupNumber}`
+                  : notificationMessage,
+            },
+          });
         }
         // Send email to all group members
         const memberEmailList = group.groupUsers
@@ -154,8 +160,18 @@ export async function POST(
           .toString();
         await sendNotiLeaveGroup(
           memberEmailList,
-          user?.name || user?.email || "",
-          isKicking
+          `${targetUserInfo?.name}<${targetUserInfo?.email}>`,
+          isKicking,
+          group.groupNumber
+        );
+        await sendNotiLeaveGroup(
+          group.groupUsers
+            .filter((user) => user.userId === targetUserId)
+            .map((groupUser) => groupUser.user.email || "")
+            .toString(),
+          "You",
+          isKicking,
+          group.groupNumber
         );
       }
 

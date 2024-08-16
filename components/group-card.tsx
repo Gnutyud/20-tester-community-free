@@ -7,8 +7,10 @@ import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { UserRole } from "@prisma/client";
 
-interface GroupCardProps extends Omit<GroupItem, "notifications" | "apps" | "confirmRequests"> {
+interface GroupCardProps
+  extends Omit<GroupItem, "notifications" | "apps" | "confirmRequests"> {
   onJoin?: (groupId: number) => void;
   groupNumber: number;
 }
@@ -35,7 +37,9 @@ const StepListing = ({
           >
             <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z" />
           </svg>
-          <span className="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">{title}</span>
+          <span className="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">
+            {title}
+          </span>
         </li>
       ) : (
         <li
@@ -70,8 +74,19 @@ const StepListing = ({
   );
 };
 
-const GroupCard = ({ id, maxMembers, status, users, becameTesterNumber, startedTestDate, onJoin, groupNumber }: GroupCardProps) => {
-  const numberOfDaysInTest = startedTestDate ? dayjs().diff(dayjs(startedTestDate), "day") : 0;
+const GroupCard = ({
+  id,
+  maxMembers,
+  status,
+  users,
+  becameTesterNumber,
+  startedTestDate,
+  onJoin,
+  groupNumber,
+}: GroupCardProps) => {
+  const numberOfDaysInTest = startedTestDate
+    ? dayjs().diff(dayjs(startedTestDate), "day")
+    : 0;
   const curentUser = useCurrentUser();
   const router = useRouter();
 
@@ -119,7 +134,9 @@ const GroupCard = ({ id, maxMembers, status, users, becameTesterNumber, startedT
         <ul role="list" className="space-y-5 my-7">
           <StepListing
             title={`${maxMembers} team members ${
-              status === StatusTypes.OPEN ? `(currently ${users.length || 0}/${maxMembers})` : ""
+              status === StatusTypes.OPEN
+                ? `(currently ${users.length || 0}/${maxMembers})`
+                : ""
             }`}
             isComplete={users.length === maxMembers}
             isCurrentStep={status === StatusTypes.OPEN}
@@ -135,7 +152,9 @@ const GroupCard = ({ id, maxMembers, status, users, becameTesterNumber, startedT
           />
           <StepListing
             title={`Run a closed test for a minimum of 14 days ${
-              startedTestDate && status === StatusTypes.INPROGRESS ? `(currently ${numberOfDaysInTest} days)` : ""
+              startedTestDate && status === StatusTypes.INPROGRESS
+                ? `(currently ${numberOfDaysInTest} days)`
+                : ""
             }`}
             isComplete={numberOfDaysInTest !== 0 && numberOfDaysInTest >= 14}
             isCurrentStep={status === StatusTypes.INPROGRESS}
@@ -148,7 +167,9 @@ const GroupCard = ({ id, maxMembers, status, users, becameTesterNumber, startedT
                 <TooltipTrigger asChild>
                   <Avatar className="inline-block h-8 w-8 rounded-full ring-2 ring-white">
                     <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback>{user?.name?.charAt(0)?.toUpperCase()}</AvatarFallback>
+                    <AvatarFallback>
+                      {user?.name?.charAt(0)?.toUpperCase()}
+                    </AvatarFallback>
                   </Avatar>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -159,37 +180,40 @@ const GroupCard = ({ id, maxMembers, status, users, becameTesterNumber, startedT
           </div>
         </div>
 
-        {!users.map((user) => user.email).includes(curentUser?.email!) && status === StatusTypes.OPEN && (
-          <Button
-            onClick={handleJoinGroup}
-            className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-          >
-            Join now
-            <svg
-              className="rtl:rotate-180 w-3.5 h-3.5 ms-2"
-              aria-hidden="true"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 14 10"
+        {!users.map((user) => user.email).includes(curentUser?.email!) &&
+          status === StatusTypes.OPEN && (
+            <Button
+              onClick={handleJoinGroup}
+              className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 mr-4"
             >
-              <path
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M1 5h12m0 0L9 1m4 4L9 9"
-              />
-            </svg>
-          </Button>
-        )}
-        {curentUser && users.map((user) => user.email).includes(curentUser.email!) && (
-          <Button
-            onClick={handleViewGroup}
-            className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-          >
-            View
-          </Button>
-        )}
+              Join now
+              <svg
+                className="rtl:rotate-180 w-3.5 h-3.5 ms-2"
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 14 10"
+              >
+                <path
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M1 5h12m0 0L9 1m4 4L9 9"
+                />
+              </svg>
+            </Button>
+          )}
+        {curentUser &&
+          (users.map((user) => user.email).includes(curentUser.email!) ||
+            curentUser.role === UserRole.ADMIN) && (
+            <Button
+              onClick={handleViewGroup}
+              className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+            >
+              View
+            </Button>
+          )}
       </div>
     </>
   );

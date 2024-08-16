@@ -206,6 +206,7 @@ export const getGroupById = async (id: string) => {
           email: groupUser.user.email,
           avatar: groupUser.user.image,
           name: groupUser.user.name,
+          role: groupUser.user.role
         };
       }), // Get email of each user in the group
       becameTesterNumber: group.confirmRequests.filter(
@@ -294,6 +295,22 @@ export const leaveGroup = async (
       where: {
         userId: userId,
         groupId: groupId,
+      },
+    });
+
+    // Delete requests created by the user (where the user is the requester)
+    await db.request.deleteMany({
+      where: {
+        groupId,
+        userId,
+      },
+    });
+
+    // Delete requests addressed to the user (where the user is the app owner)
+    await db.request.deleteMany({
+      where: {
+        groupId,
+        userRequested: userId,
       },
     });
 

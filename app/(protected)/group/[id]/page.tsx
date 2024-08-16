@@ -89,12 +89,17 @@ function GroupDetails({ params }: { params: { id: string } }) {
   const [confirmLoading, setConfirmLoading] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const isOwnerGroup = curentUser?.id === group?.ownerId;
+  const IS_MEMBER = group?.users
+    .map((user) => user.email)
+    .includes(curentUser?.email!);
+  const IS_ADMIN = curentUser?.role === UserRole.ADMIN;
 
   useEffect(() => {
     if (
       group?.users &&
       curentUser?.id &&
-      !group.users.some((user) => user.id === curentUser.id)
+      !group.users.some((user) => user.id === curentUser.id) &&
+      curentUser.role !== UserRole.ADMIN
     )
       redirect("/");
   }, [curentUser, group?.users]);
@@ -270,12 +275,14 @@ function GroupDetails({ params }: { params: { id: string } }) {
           status={group.status}
           members={group.users.length}
         />
-        <Button
-          className="text-white bg-red-700 hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-700"
-          onClick={() => handleLeaveGroup(myApp?.id!)}
-        >
-          Leave
-        </Button>
+        {IS_MEMBER && (
+          <Button
+            className="text-white bg-red-700 hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-700"
+            onClick={() => handleLeaveGroup(myApp?.id!)}
+          >
+            Leave
+          </Button>
+        )}
       </div>
       <div className="grid grid-cols-1 md:grid-cols-5 gap-8 py-4">
         <div className="md:col-span-3">
@@ -287,19 +294,19 @@ function GroupDetails({ params }: { params: { id: string } }) {
                     value="testing"
                     onClick={() => setParams("testing")}
                   >
-                    Todo
+                    Todo ({TODO_APPS.length || 0})
                   </TabsTrigger>
                   <TabsTrigger
                     value="confirm"
                     onClick={() => setParams("confirm")}
                   >
-                    Confirm
+                    Confirm ({COMBINE_REQUESTS_TO_ME.length || 0})
                   </TabsTrigger>
                   <TabsTrigger
                     value="tested"
                     onClick={() => setParams("tested")}
                   >
-                    Tested
+                    Tested ({TESTED_APPS.length || 0})
                   </TabsTrigger>
                 </TabsList>
                 <TabsContent value="testing">
@@ -312,35 +319,43 @@ function GroupDetails({ params }: { params: { id: string } }) {
                         <p className="text-sm font-medium">
                           {app.appName} ({app.packageName})
                         </p>
-                        {(isOwnerGroup ||
-                          curentUser?.role === UserRole.ADMIN) && (
-                          <Button
-                            className="text-white bg-red-700 hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-700"
-                            onClick={() => handleLeaveGroup(app.id, app.userId)}
-                          >
-                            Kick
-                          </Button>
-                        )}
-                        {!(app as any).requestSent ? (
-                          <Button onClick={() => setSelectedApp(app)}>
-                            {"Click to test"}
-                          </Button>
-                        ) : (app as any)?.requestStatus ===
-                          RequestStatus.REJECTED ? (
-                          <Button
-                            className="bg-green-500 text-white"
-                            onClick={() => setSelectedApp(app)}
-                          >
-                            Re-test
-                          </Button>
-                        ) : (
-                          <Button className="bg-yellow-500 text-white">
-                            {(app as any)?.requestStatus ===
-                            RequestStatus.REJECTED
-                              ? "Re-test"
-                              : (app as any)?.requestStatus}
-                          </Button>
-                        )}
+                        <div>
+                          {(isOwnerGroup ||
+                            curentUser?.role === UserRole.ADMIN) && (
+                            <Button
+                              className="text-white bg-red-700 hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-700 mr-4"
+                              onClick={() =>
+                                handleLeaveGroup(app.id, app.userId)
+                              }
+                            >
+                              Kick
+                            </Button>
+                          )}
+                          {IS_MEMBER && (
+                            <>
+                              {!(app as any).requestSent ? (
+                                <Button onClick={() => setSelectedApp(app)}>
+                                  {"Click to test"}
+                                </Button>
+                              ) : (app as any)?.requestStatus ===
+                                RequestStatus.REJECTED ? (
+                                <Button
+                                  className="bg-green-500 text-white"
+                                  onClick={() => setSelectedApp(app)}
+                                >
+                                  Re-test
+                                </Button>
+                              ) : (
+                                <Button className="bg-yellow-500 text-white">
+                                  {(app as any)?.requestStatus ===
+                                  RequestStatus.REJECTED
+                                    ? "Re-test"
+                                    : (app as any)?.requestStatus}
+                                </Button>
+                              )}
+                            </>
+                          )}
+                        </div>
                       </div>
                     ))
                   ) : (
@@ -504,13 +519,14 @@ function GroupDetails({ params }: { params: { id: string } }) {
                           </div>
                         </div>
                         <div className="hidden shrink-0 sm:flex sm:flex-col sm:items-end">
-                          <p className="text-sm leading-6 ">{"User"}</p>
-                          {person.email === curentUser?.email ? (
+                          <p className="text-sm leading-6 ">{person.role}</p>
+                          {person.email !== curentUser?.email ? (
                             <p className="mt-1 text-xs leading-5 text-gray-500">
-                              Last seen{" "}
+                              {/* Last seen{" "}
                               <time dateTime={"2024/02/28"}>
                                 {"2024/02/28"}
-                              </time>
+                              </time> */}
+                              Last seen a moment ago
                             </p>
                           ) : (
                             <div className="mt-1 flex items-center gap-x-1.5">

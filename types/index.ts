@@ -1,4 +1,4 @@
-import { Notification, App, Request } from "@prisma/client";
+import { Notification, App, Request, UserRole } from "@prisma/client";
 
 export enum StatusTypes {
   OPEN = "OPEN",
@@ -12,7 +12,13 @@ export interface GroupItem {
   maxMembers: number;
   groupNumber: number;
   status: StatusTypes;
-  users: { id: string; email: string; avatar: string; name: string }[];
+  users: {
+    id: string;
+    email: string;
+    avatar: string;
+    name: string;
+    role: UserRole;
+  }[];
   becameTesterNumber: number;
   startedTestDate: string | null;
   notifications: Notification[];

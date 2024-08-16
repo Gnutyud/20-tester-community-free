@@ -45,26 +45,28 @@ export const sendVerificationEmail = async (email: string, token: string) => {
 
 export const sendNotiNewMemberJoin = async (
   email: string,
-  memberName: string
+  memberName: string,
+  groupNumber: number
 ) => {
   await transporter.sendMail({
     from: "20 Tester Community <no-reply@20testercommunity.com>",
     to: email,
-    subject: "New member join!",
-    html: `<p>${memberName} has joined the group.</p>`,
+    subject: `New member join the Group#${groupNumber}!`,
+    html: `<p>${memberName} has joined the Group#${groupNumber}.</p>`,
   });
 };
 
 export const sendNotiLeaveGroup = async (
   emailList: string,
   memberName: string,
-  isKicking: boolean
+  isKicking: boolean,
+  groupNumber: number
 ) => {
   const action = isKicking ? "kicked from" : "left";
   const subject = isKicking
-    ? "A member was kicked from the group"
-    : "A member left the group";
-  const html = `<p>${memberName} has been ${action} the group.</p>`;
+    ? `A member was kicked from the Group#${groupNumber}`
+    : `A member left the Group#${groupNumber}`;
+  const html = `<p>${memberName} has been ${action} the Group#${groupNumber}.</p>`;
 
   await transporter.sendMail({
     from: "20 Tester Community <no-reply@20testercommunity.com>",
