@@ -161,6 +161,8 @@ export const getGroups = async () => {
           email: groupUser.user.email,
           avatar: groupUser.user.image,
           name: groupUser.user.name,
+          role: groupUser.user.role,
+          lastActiveAt: groupUser.user.lastActiveAt,
         };
       }), // Get email of each user in the group
       becameTesterNumber: group.confirmRequests.filter(
@@ -168,7 +170,8 @@ export const getGroups = async () => {
       ).length,
     }));
     return formattedGroups;
-  } catch {
+  } catch (error: any) {
+    console.log(error);
     return [];
   }
 };
@@ -206,7 +209,8 @@ export const getGroupById = async (id: string) => {
           email: groupUser.user.email,
           avatar: groupUser.user.image,
           name: groupUser.user.name,
-          role: groupUser.user.role
+          role: groupUser.user.role,
+          lastActiveAt: groupUser.user.lastActiveAt,
         };
       }), // Get email of each user in the group
       becameTesterNumber: group.confirmRequests.filter(
@@ -219,7 +223,8 @@ export const getGroupById = async (id: string) => {
     };
 
     return formattedGroups;
-  } catch {
+  } catch (error: any) {
+    console.log(error);
     return null;
   }
 };

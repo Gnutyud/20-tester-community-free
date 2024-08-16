@@ -6,7 +6,7 @@ import {
   joinGroup,
   leaveGroup,
 } from "@/data/group";
-import { getUserById } from "@/data/user";
+import { getUserById, updateLastActive } from "@/data/user";
 import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { sendNotiLeaveGroup, sendNotiNewMemberJoin } from "@/lib/mail";
@@ -26,6 +26,8 @@ export async function POST(
     if (!user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
     }
+
+    await updateLastActive(user.id!);
 
     const currentUserId = user?.id;
     const group = await getGroupById(groupId);
@@ -207,6 +209,10 @@ export async function GET(
     const groupId = params.id;
     const group = await getGroupById(groupId);
     const apps = await getGroupAppsAndRequests(groupId, user?.id || "");
+
+    if (user?.id) {
+      await updateLastActive(user.id);
+    }
 
     return NextResponse.json({ ...group, apps }, { status: 200 });
   } catch (error: any) {

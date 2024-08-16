@@ -18,6 +18,7 @@ export interface GroupItem {
     avatar: string;
     name: string;
     role: UserRole;
+    lastActiveAt?: string;
   }[];
   becameTesterNumber: number;
   startedTestDate: string | null;

@@ -1,4 +1,5 @@
 import { getGroups } from "@/data/group";
+import { updateLastActive } from "@/data/user";
 import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 
@@ -7,6 +8,9 @@ export async function GET(request: Request) {
   if (!user) {
     return Response.json({ message: "unauthorized" }, { status: 403 });
   }
+
+  await updateLastActive(user.id!);
+
   const notifications = await db.notification.findMany({
     where: {
       userId: user.id,
@@ -34,5 +38,8 @@ export async function POST(request: Request) {
     },
   });
 
-  return Response.json({ success: "update notification successfully!" }, { status: 200 });
+  return Response.json(
+    { success: "update notification successfully!" },
+    { status: 200 }
+  );
 }

@@ -43,6 +43,7 @@ model User {
   notifications         Notification[]
   requestsMade          Request[]              @relation("RequestingUser")
   ownedGroups           Group[]                @relation("GroupOwner")
+  lastActiveAt          DateTime?               @default(now()) // To store the last active timestamp
 }
 
 model Account {

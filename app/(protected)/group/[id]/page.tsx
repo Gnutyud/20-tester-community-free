@@ -261,6 +261,14 @@ function GroupDetails({ params }: { params: { id: string } }) {
     }
   };
 
+  const isUserActive = (lastActiveAt: string) => {
+    const lastActiveAtConvert = new Date(lastActiveAt).getTime();
+    const now = Date.now();
+    const activeThreshold = 10 * 60 * 1000; // 10 minutes in milliseconds
+
+    return now - lastActiveAtConvert <= activeThreshold;
+  };
+
   if (!group) {
     return <Loading />;
   }
@@ -520,21 +528,15 @@ function GroupDetails({ params }: { params: { id: string } }) {
                         </div>
                         <div className="hidden shrink-0 sm:flex sm:flex-col sm:items-end">
                           <p className="text-sm leading-6 ">{person.role}</p>
-                          {person.email !== curentUser?.email ? (
-                            <p className="mt-1 text-xs leading-5 text-gray-500">
-                              {/* Last seen{" "}
-                              <time dateTime={"2024/02/28"}>
-                                {"2024/02/28"}
-                              </time> */}
-                              Last seen a moment ago
-                            </p>
-                          ) : (
+                          {person.lastActiveAt && (
                             <div className="mt-1 flex items-center gap-x-1.5">
                               <div className="flex-none rounded-full bg-emerald-500/20 p-1">
                                 <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                               </div>
                               <p className="text-xs leading-5 text-gray-500">
-                                Online
+                                {isUserActive(person.lastActiveAt)
+                                  ? "Online"
+                                  : "Offline"}
                               </p>
                             </div>
                           )}

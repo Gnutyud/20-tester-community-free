@@ -19,3 +19,16 @@ export const getUserById = async (id: string) => {
     return null;
   }
 };
+
+export const updateLastActive = async (userId: string) => {
+  try {
+    if (userId) {
+      await db.user.update({
+        where: { id: userId },
+        data: { lastActiveAt: new Date() }, // Update the last active time to now
+      });
+    }
+  } catch (error) {
+    return null;
+  }
+};
