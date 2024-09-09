@@ -26,7 +26,18 @@ export const checkAndUpdateGroupStatus = async (
     });
 
     if (!group) return;
-
+    if (
+      group?.groupUsers.length < group.maxMembers &&
+      group.status !== StatusTypes.OPEN
+    ) {
+      // Update the group status to PENDING (Step 2)
+      await db.group.update({
+        where: { id: groupId },
+        data: {
+          status: StatusTypes.OPEN,
+        },
+      });
+    }
     if (
       group?.groupUsers.length >= group.maxMembers &&
       group.status === StatusTypes.OPEN

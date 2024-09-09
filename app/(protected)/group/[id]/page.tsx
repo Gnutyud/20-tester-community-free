@@ -48,6 +48,7 @@ import {
 } from "@prisma/client";
 import axios from "axios";
 import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 import { Bell, Copy } from "lucide-react";
 import {
   redirect,
@@ -60,6 +61,12 @@ import { toast } from "react-hot-toast";
 import Loading from "./loading";
 
 type TabName = "testing" | "confirm" | "tested";
+interface AppInfo {
+  appName: string;
+  packageName: string;
+  id: string;
+}
+dayjs.extend(relativeTime);
 
 function GroupDetails({ params }: { params: { id: string } }) {
   const id = params.id;
@@ -141,6 +148,27 @@ function GroupDetails({ params }: { params: { id: string } }) {
       userEmail: user?.email,
       userName: user?.name,
       userAvatar: user?.avatar,
+    };
+  });
+  // Create a map to store user app information
+  const userAppMap: Record<string, AppInfo[]> = {};
+  // Populate the map with app info
+  group?.apps.forEach((app) => {
+    if (!userAppMap[app.userId]) {
+      userAppMap[app.userId] = [];
+    }
+    userAppMap[app.userId].push({
+      appName: app.appName,
+      packageName: app.packageName,
+      id: app.id,
+    });
+  });
+
+  // Add app info to users
+  const updatedUsers = group?.users.map((user) => {
+    return {
+      ...user,
+      apps: userAppMap[user.id] || [],
     };
   });
 
@@ -253,7 +281,11 @@ function GroupDetails({ params }: { params: { id: string } }) {
         });
         toast.success("You left the group successfully!");
         setLoading(false);
-        router.push("/");
+        if (userId) {
+          fetchGroup();
+        } else {
+          router.push("/");
+        }
       }
     } catch (error) {
       toast.error("Leave group error");
@@ -328,17 +360,6 @@ function GroupDetails({ params }: { params: { id: string } }) {
                           {app.appName} ({app.packageName})
                         </p>
                         <div>
-                          {(isOwnerGroup ||
-                            curentUser?.role === UserRole.ADMIN) && (
-                            <Button
-                              className="text-white bg-red-700 hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-700 mr-4"
-                              onClick={() =>
-                                handleLeaveGroup(app.id, app.userId)
-                              }
-                            >
-                              Kick
-                            </Button>
-                          )}
                           {IS_MEMBER && (
                             <>
                               {!(app as any).requestSent ? (
@@ -503,7 +524,7 @@ function GroupDetails({ params }: { params: { id: string } }) {
               </AccordionTrigger>
               <AccordionContent>
                 <ul role="list" className="border rounded-lg p-4 shadow-md">
-                  {group.users.map((person, index) => (
+                  {updatedUsers?.map((person, index) => (
                     <div key={person.email}>
                       <li className="flex justify-between gap-x-6 py-2">
                         <div className="flex min-w-0 gap-x-4">
@@ -524,19 +545,46 @@ function GroupDetails({ params }: { params: { id: string } }) {
                             <p className="mt-1 truncate text-xs leading-5 text-gray-500">
                               {person.email}
                             </p>
+                            <p className="mt-1 truncate text-xs leading-5 text-gray-500">
+                              App: {person.apps[0].appName} (
+                              {person.apps[0].packageName})
+                            </p>
+                            {((isOwnerGroup && curentUser?.id !== person.id) ||
+                              curentUser?.role === UserRole.ADMIN) && (
+                              <Button
+                                className="text-white bg-red-700 hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-700 mt-4"
+                                onClick={() =>
+                                  handleLeaveGroup(person.apps[0].id, person.id)
+                                }
+                              >
+                                Kick
+                              </Button>
+                            )}
                           </div>
                         </div>
                         <div className="hidden shrink-0 sm:flex sm:flex-col sm:items-end">
                           <p className="text-sm leading-6 ">{person.role}</p>
                           {person.lastActiveAt && (
                             <div className="mt-1 flex items-center gap-x-1.5">
-                              <div className="flex-none rounded-full bg-emerald-500/20 p-1">
-                                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                              <div
+                                className={`flex-none rounded-full ${
+                                  !isUserActive(person.lastActiveAt)
+                                    ? "bg-neutral-500/20"
+                                    : "bg-emerald-500/20"
+                                } p-1`}
+                              >
+                                <div
+                                  className={`h-1.5 w-1.5 rounded-full ${
+                                    !isUserActive(person.lastActiveAt)
+                                      ? "bg-neutral-500"
+                                      : "bg-emerald-500"
+                                  }`}
+                                />
                               </div>
                               <p className="text-xs leading-5 text-gray-500">
                                 {isUserActive(person.lastActiveAt)
                                   ? "Online"
-                                  : "Offline"}
+                                  : dayjs(person.lastActiveAt).fromNow()}
                               </p>
                             </div>
                           )}
