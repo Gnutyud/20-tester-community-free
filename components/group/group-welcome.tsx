@@ -8,7 +8,12 @@ interface GroupWelcomeProps {
   members: number;
 }
 
-export const GroupWelcome = ({ name, maxMembers, status, members }: GroupWelcomeProps) => {
+export const GroupWelcome = ({
+  name,
+  maxMembers,
+  status,
+  members,
+}: GroupWelcomeProps) => {
   return (
     <div className="space-y-2 mb-4">
       <div className="h-[75px] w-[75px] rounded-full bg-zinc-500 dark:bg-zinc-700 flex items-center justify-center">
@@ -41,6 +46,19 @@ export const GroupWelcome = ({ name, maxMembers, status, members }: GroupWelcome
         {name} ({members}/{maxMembers})
       </p>
       <p className="text-zinc-600 dark:text-zinc-400 text-sm">{`This is the group will help ${maxMembers} apps pass the Google Play Console closed tesing required.`}</p>
+      <h2 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
+        Group rules:
+      </h2>
+      <ul className="max-w-md space-y-1 text-gray-500 list-disc list-inside dark:text-gray-400">
+        <li>
+          Users who are not active for a long time will be removed by the group
+          owner or admin.
+        </li>
+        <li>
+          Please check the To Do tab and start testing to become a tester for
+          each other.
+        </li>
+      </ul>
     </div>
   );
 };
