@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const user = await currentUser(); // Assuming this function retrieves the current user
+    const user = await currentUser();
     if (!user) {
       return NextResponse.json(
         { message: "User not authenticated" },
@@ -17,12 +17,17 @@ export async function GET() {
 
     const apps = await db.app.findMany({
       where: { userId: user.id },
-      include: {
-        groupApps: {
-          include: {
-            group: true, // Include all information about the associated groups
-          },
-        },
+      orderBy: {
+        createdAt: "desc",
+      },
+      select: {
+        id: true,
+        appName: true,
+        packageName: true,
+        installUrl: true,
+        googleGroupUrl: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
 

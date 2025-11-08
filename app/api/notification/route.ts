@@ -1,12 +1,12 @@
-import { getGroups } from "@/data/group";
 import { updateLastActive } from "@/data/user";
 import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   const user = await currentUser();
   if (!user) {
-    return Response.json({ message: "unauthorized" }, { status: 403 });
+    return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
   }
 
   await updateLastActive(user.id!);
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     },
   });
 
-  return Response.json(notifications, { status: 200 });
+  return NextResponse.json(notifications, { status: 200 });
 }
 
 export async function POST(request: Request) {
@@ -29,17 +29,20 @@ export async function POST(request: Request) {
   const body = await request.json();
   const { id } = body;
   if (!user) {
-    return Response.json({ message: "unauthorized" }, { status: 403 });
+    return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
   }
-  const notification = await db.notification.update({
-    where: { id },
+
+  await updateLastActive(user.id!);
+
+  await db.notification.updateMany({
+    where: { id, userId: user.id },
     data: {
       unread: false,
     },
   });
 
-  return Response.json(
-    { success: "update notification successfully!" },
+  return NextResponse.json(
+    { success: "Update notification successfully!" },
     { status: 200 }
   );
 }

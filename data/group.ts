@@ -18,11 +18,22 @@ export const checkAndUpdateGroupStatus = async (
       include: {
         groupUsers: {
           include: {
-            user: true, // Include the user details
+            user: {
+              select: {
+                id: true,
+                email: true,
+                image: true,
+                name: true,
+              },
+            },
           },
         },
-        confirmRequests: true, // Include the confirm requests of the group
-      }, // Include the members of the group
+        confirmRequests: {
+          select: {
+            status: true,
+          },
+        },
+      },
     });
 
     if (!group) return;
@@ -150,21 +161,34 @@ export const checkAndUpdateGroupStatus = async (
 
 export const getGroups = async () => {
   try {
-    const groupsWithMembers = await db.group.findMany({
+    const groups = await db.group.findMany({
       include: {
-        confirmRequests: true, // Include the confirm requests of the group
+        confirmRequests: {
+          select: {
+            status: true,
+          },
+        },
         groupUsers: {
           include: {
-            user: true, // Include the user details
+            user: {
+              select: {
+                id: true,
+                email: true,
+                image: true,
+                name: true,
+                role: true,
+                lastActiveAt: true,
+              },
+            },
           },
         },
       },
     });
 
-    if (!groupsWithMembers) return [];
+    if (!groups) return [];
 
     // Map over the groups and transform the data to include only necessary information
-    const formattedGroups = groupsWithMembers.map((group) => ({
+    const formattedGroups = groups.map((group) => ({
       ...group,
       users: group.groupUsers.map((groupUser) => {
         return {
@@ -192,13 +216,43 @@ export const getGroupById = async (id: string) => {
     const group = await db.group.findUnique({
       where: { id },
       include: {
-        confirmRequests: true, // Include the confirm requests of the group
-        groupUsers: {
-          include: {
-            user: true, // Include the user details
+        confirmRequests: {
+          select: {
+            id: true,
+            status: true,
+            userId: true,
+            userRequested: true,
+            imageUrl: true,
+            createdAt: true,
+            updatedAt: true,
           },
         },
-        notifications: true, // Include the notifications of the group
+        groupUsers: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                image: true,
+                name: true,
+                role: true,
+                lastActiveAt: true,
+              },
+            },
+          },
+        },
+        notifications: {
+          select: {
+            id: true,
+            message: true,
+            title: true,
+            createdAt: true,
+            updatedAt: true,
+            userId: true,
+            groupId: true,
+            unread: true,
+          },
+        },
         owner: {
           select: {
             id: true,
@@ -295,40 +349,59 @@ export const joinGroup = async (
 export const leaveGroup = async (
   appId: string,
   groupId: string,
-  userId: string
+  userId: string,
+  options: { force?: boolean } = {}
 ): Promise<void> => {
   try {
+    const groupMeta = await db.group.findUnique({
+      where: { id: groupId },
+      select: {
+        status: true,
+      },
+    });
+
+    if (!groupMeta) {
+      throw new Error("Group not found");
+    }
+
+    const restrictedStatuses = new Set<StatusTypes>([
+      StatusTypes.PENDING,
+      StatusTypes.INPROGRESS,
+    ]);
+
+    if (!options.force && restrictedStatuses.has(groupMeta.status)) {
+      throw new Error(
+        "Members cannot leave while the group is verifying testers. Please contact the group owner."
+      );
+    }
+
     // Remove the association of the app with the group
-    await db.groupApps.deleteMany({
-      where: {
-        appId: appId,
-        groupId: groupId,
-      },
-    });
-
-    // Remove the user from the group
-    await db.groupUser.deleteMany({
-      where: {
-        userId: userId,
-        groupId: groupId,
-      },
-    });
-
-    // Delete requests created by the user (where the user is the requester)
-    await db.request.deleteMany({
-      where: {
-        groupId,
-        userId,
-      },
-    });
-
-    // Delete requests addressed to the user (where the user is the app owner)
-    await db.request.deleteMany({
-      where: {
-        groupId,
-        userRequested: userId,
-      },
-    });
+    await db.$transaction([
+      db.groupApps.deleteMany({
+        where: {
+          appId: appId,
+          groupId: groupId,
+        },
+      }),
+      db.groupUser.deleteMany({
+        where: {
+          userId: userId,
+          groupId: groupId,
+        },
+      }),
+      db.request.deleteMany({
+        where: {
+          groupId,
+          userId,
+        },
+      }),
+      db.request.deleteMany({
+        where: {
+          groupId,
+          userRequested: userId,
+        },
+      }),
+    ]);
 
     console.log(
       `User ${userId} and app ${appId} left the group ${groupId} successfully.`

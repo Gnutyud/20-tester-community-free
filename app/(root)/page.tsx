@@ -80,12 +80,31 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const fetchGroupData = async () => {
-      const response: any = await axios.get("/api/app");
-      setApps(response.data);
+    if (!curentUser) {
+      setApps([]);
+      return;
+    }
+
+    let isMounted = true;
+    const fetchApps = async () => {
+      try {
+        const response: any = await axios.get("/api/app");
+        if (isMounted) {
+          setApps(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching apps", error);
+        if (isMounted) {
+          setApps([]);
+        }
+      }
     };
-    fetchGroupData();
-  }, []);
+    fetchApps();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [curentUser]);
 
   // searchParams with a provided key/value pair
   const createQueryString = useCallback(

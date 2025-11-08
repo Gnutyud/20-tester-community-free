@@ -11,7 +11,7 @@ import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { sendNotiLeaveGroup, sendNotiNewMemberJoin } from "@/lib/mail";
 import { GroupActions } from "@/types";
-import { UserRole } from "@prisma/client";
+import { StatusTypes, UserRole } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 export async function POST(
@@ -31,6 +31,10 @@ export async function POST(
 
     const currentUserId = user?.id;
     const group = await getGroupById(groupId);
+
+    if (!group) {
+      return NextResponse.json({ message: "Group not found" }, { status: 404 });
+    }
 
     if (action === GroupActions.JOIN) {
       if (!appId) {
@@ -129,8 +133,22 @@ export async function POST(
         }
       }
 
+      const restrictedStatuses = new Set<StatusTypes>([
+        StatusTypes.PENDING,
+        StatusTypes.INPROGRESS,
+      ]);
+      if (!isKicking && restrictedStatuses.has(group.status)) {
+        return NextResponse.json(
+          {
+            error:
+              "Members cannot leave once everyone is verifying or in the 14-day testing period. Please contact the group owner.",
+          },
+          { status: 400 }
+        );
+      }
+
       // Remove the app and user from the group
-      await leaveGroup(appId, groupId, targetUserId);
+      await leaveGroup(appId, groupId, targetUserId, { force: isKicking });
 
       // Check and update group status
       await checkAndUpdateGroupStatus(groupId);

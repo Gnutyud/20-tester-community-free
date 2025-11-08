@@ -131,7 +131,7 @@ export const sendRequestBecameTesterEmail = async (
 
 export const sendConfirmTesterEmail = async (
   email: string,
-  groupId: number,
+  groupId: string,
   actionType: RequestStatus,
   approvalUserName: string,
   approvalUserMail: string

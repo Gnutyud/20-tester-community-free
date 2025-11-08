@@ -2,6 +2,9 @@
   "name": "20-tester-community",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22.0.0 <23"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
@@ -51,7 +54,7 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
-    "@types/node": "^20",
+    "@types/node": "^22",
     "@types/node-schedule": "^2.1.7",
     "@types/nodemailer": "^6.4.14",
     "@types/react": "^18",
