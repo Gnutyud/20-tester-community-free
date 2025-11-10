@@ -21,14 +21,16 @@ export function NoOpenGroupCard() {
         <span className="sr-only">Info</span>
         <h3 className="text-lg font-medium text-gray-800 dark:text-gray-300">No group found!</h3>
       </div>
-      <div className="mt-2 mb-4 text-sm text-gray-800 dark:text-gray-300">{`Let's create a new group and invite your friends to help.`}</div>
+      <div className="mt-2 mb-4 text-sm text-gray-800 dark:text-gray-300">
+        New groups are created automatically. Add your app to the queue so we can match you with other developers.
+      </div>
       <div className="flex">
         <button
           onClick={() => router.push("/group/create")}
           type="button"
           className="text-white bg-gray-700 hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-xs px-3 py-1.5 me-2 text-center inline-flex items-center dark:bg-gray-600 dark:hover:bg-gray-500 dark:focus:ring-gray-800"
         >
-          Create a new group
+          Join the queue
         </button>
       </div>
     </div>

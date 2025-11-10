@@ -71,13 +71,6 @@ export const RegisterSchema = z.object({
   }),
 });
 
-export const NewGroupSchema = z.object({
-  maxMembers: z.coerce.number().int().min(5, {
-    message: "Minimum of 5 member required",
-  }),
-  appId: z.string(),
-});
-
 export const NewAppSchema = z.object({
   appName: z.string().min(1, {
     message: "App name is required",
@@ -103,4 +96,15 @@ export const NewAppSchema = z.object({
       message: "Invalid Google Groups URL format",
     }
   ),
+  targetTesterCount: z.coerce
+    .number({
+      invalid_type_error: "Number of testers is required",
+    })
+    .int()
+    .min(4, {
+      message: "You need at least 4 testers",
+    })
+    .max(50, {
+      message: "Tester target too high",
+    }),
 });

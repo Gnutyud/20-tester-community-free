@@ -146,3 +146,26 @@ export const sendConfirmTesterEmail = async (
     }<${approvalUserMail}> ${actionType} you installed his app.</p><p><a href="${groupLink}">View group</a></p>`,
   });
 };
+
+export const sendQueueReminderEmail = async (
+  email: string,
+  waitHours: number,
+  inviteLink: string
+) => {
+  const subject =
+    waitHours >= 48
+      ? "Still waiting to form your testing group"
+      : "Almost there—invite testers to fill your group";
+
+  const message =
+    waitHours >= 48
+      ? `<p>Your app is still in the matchmaking queue and we need more testers to complete a group.</p><p>We will keep your app queued and notify you as soon as we find a cohort. Meanwhile feel free to invite more developers to join:</p><p><a href="${inviteLink}">${inviteLink}</a></p>`
+      : `<p>Your app has been waiting in the matchmaking queue for ${waitHours} hours.</p><p>Invite a few friends or fellow developers to join the queue so we can hit the minimum of five members faster:</p><p><a href="${inviteLink}">${inviteLink}</a></p>`;
+
+  await transporter.sendMail({
+    from: "20 Tester Community <no-reply@20testercommunity.com>",
+    to: email,
+    subject,
+    html: message,
+  });
+};

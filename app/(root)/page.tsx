@@ -3,48 +3,25 @@ import GroupCard from "@/components/group-card";
 import { NoOpenGroupCard } from "@/components/no-open-group-card";
 import Sidebar from "@/components/sidebar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Container } from "@/components/ui/container";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { GroupActions, GroupItem, StatusTypes } from "@/types";
+import { GroupItem, StatusTypes } from "@/types";
 import axios from "axios";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import toast from "react-hot-toast";
 import Loading from "./loading";
-import LoadingPage from "@/components/loading-page";
 
 type TabName = "open" | "inprogress" | "complete";
 
 export default function Home() {
   const [groupData, setGroupData] = useState<GroupItem[]>([]);
-  const [groupId, setGroupId] = useState<number | null>(null);
-  const [appId, setAppId] = useState<string>();
-  const [open, setIsOpen] = useState<boolean>(false);
   const curentUser = useCurrentUser();
   const router = useRouter();
   const [apps, setApps] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [loadingJoin, setLoadingJoin] = useState<boolean>(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const tabName = searchParams.get("tab");
@@ -122,48 +99,12 @@ export default function Home() {
     router.push(pathname + "?" + createQueryString("tab", value));
   };
 
-  const onSelectGroupToJoin = (groupId: number) => {
-    if (apps.length === 0) {
-      toast.error("You need to add an app to join a group");
-      return;
-    }
-    setIsOpen(true);
-    setGroupId(groupId);
-  };
-
-  const handleJoinGroup = async () => {
-    try {
-      if (!curentUser) {
-        router.push(`/auth/login`);
-      } else {
-        if (groupId) {
-          setLoadingJoin(true);
-          await axios.post(`/api/group/${groupId}`, {
-            appId: appId,
-            action: GroupActions.JOIN,
-          });
-          toast.success("Joined group successfully");
-          setIsOpen(false);
-          setGroupId(null);
-          setLoadingJoin(false);
-          router.push(`/group/${groupId}`);
-        }
-      }
-    } catch (error) {
-      toast.error("Error joining group");
-      setIsOpen(false);
-      setGroupId(null);
-      setLoadingJoin(false);
-    }
-  };
-
   if (loading && groupData.length === 0) {
     return <Loading />;
   }
 
   return (
     <>
-      {loadingJoin && <LoadingPage text="Joining to group..." />}
       <main>
         <Container>
           <section className="grid grid-cols-1 md:grid-cols-4 gap-8 py-4">
@@ -215,7 +156,6 @@ export default function Home() {
                         users={group.users}
                         becameTesterNumber={group.becameTesterNumber}
                         startedTestDate={group.startedTestDate}
-                        onJoin={onSelectGroupToJoin}
                         groupNumber={group.groupNumber}
                       />
                     ))}
@@ -271,41 +211,6 @@ export default function Home() {
           </section>
         </Container>
       </main>
-      <AlertDialog open={open} onOpenChange={setIsOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              Select your app to join this group
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will add your app to the group
-              and start testing.
-            </AlertDialogDescription>
-            <Select
-              onValueChange={(value) => setAppId(value)}
-              defaultValue={appId}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select your app to join this group" />
-              </SelectTrigger>
-              <SelectContent>
-                {apps?.map((app) => (
-                  <SelectItem key={app.id} value={app.id}>
-                    {app.appName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction disabled={!appId} onClick={handleJoinGroup}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{" "}
-              Continue
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }

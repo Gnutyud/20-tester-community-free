@@ -43,6 +43,7 @@ model User {
   notifications         Notification[]
   requestsMade          Request[]              @relation("RequestingUser")
   ownedGroups           Group[]                @relation("GroupOwner")
+  queueEntries          QueueEntry[]
   lastActiveAt          DateTime?               @default(now()) // To store the last active timestamp
 }
 
@@ -101,14 +102,14 @@ model TwoFactorConfirmation {
 }
 
 model Notification {
-  id      String  @id @default(auto()) @map("_id") @db.ObjectId
-  groupId String  @db.ObjectId
-  userId  String  @db.ObjectId
+  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  groupId String?  @db.ObjectId
+  userId  String   @db.ObjectId
   message String
   title   String
-  unread  Boolean @default(true)
-  group   Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unread  Boolean  @default(true)
+  group   Group?   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -121,8 +122,11 @@ model App {
   appName        String
   installUrl     String
   googleGroupUrl String
+  targetTesterCount   Int        @default(14)
+  fulfilledTesterCount Int       @default(0)
   user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   groupApps      GroupApps[]
+  queueEntries   QueueEntry[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -161,6 +165,21 @@ model GroupApps {
   app     App    @relation(fields: [appId], references: [id], onDelete: Cascade)
 
   @@unique([groupId, appId])
+}
+
+model QueueEntry {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  appId           String   @db.ObjectId
+  userId          String   @db.ObjectId
+  remainingSlots  Int
+  joinedAt        DateTime @default(now())
+  lastReminderAt  DateTime?
+  reminderStage   Int      @default(0)
+  app             App      @relation(fields: [appId], references: [id], onDelete: Cascade)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([joinedAt])
+  @@unique([appId])
 }
 
 model Request {

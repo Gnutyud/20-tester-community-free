@@ -26,6 +26,7 @@ function AppCreate() {
       packageName: "",
       installUrl: "",
       googleGroupUrl: "",
+      targetTesterCount: 14,
     },
   });
 
@@ -101,6 +102,26 @@ function AppCreate() {
                   <FormLabel>Google Group</FormLabel>
                   <FormControl>
                     <Input placeholder="Please fill your Google Groups url here" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="targetTesterCount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>How many testers do you need?</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min={4}
+                      max={50}
+                      placeholder="Example: 14"
+                      {...field}
+                      onChange={(event) => field.onChange(Number(event.target.value))}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

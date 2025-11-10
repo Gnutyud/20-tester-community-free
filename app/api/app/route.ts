@@ -26,6 +26,8 @@ export async function GET() {
         packageName: true,
         installUrl: true,
         googleGroupUrl: true,
+        targetTesterCount: true,
+        fulfilledTesterCount: true,
         createdAt: true,
         updatedAt: true,
       },
