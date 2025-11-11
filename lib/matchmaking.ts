@@ -26,6 +26,28 @@ const REMINDER_THRESHOLDS = [
 
 type TransactionClient = Prisma.TransactionClient;
 
+const QUEUE_ENTRY_INCLUDE = {
+  app: {
+    select: {
+      id: true,
+      userId: true,
+      targetTesterCount: true,
+      fulfilledTesterCount: true,
+    },
+  },
+  user: {
+    select: {
+      id: true,
+      email: true,
+      name: true,
+    },
+  },
+} satisfies Prisma.QueueEntryInclude;
+
+type QueueEntryWithApp = Prisma.QueueEntryGetPayload<{
+  include: typeof QUEUE_ENTRY_INCLUDE;
+}>;
+
 const reserveNextGroupNumber = async (tx: TransactionClient) => {
   const existingCounter = await tx.counter.findUnique({
     where: { model: "Group" },
@@ -104,31 +126,11 @@ const handleQueueReminders = async (entries: QueueEntryWithApp[]) => {
   }
 };
 
-type QueueEntryWithRelations = NonNullable<
-  Awaited<ReturnType<typeof db.queueEntry.findFirst>>
->;
-
 export const processQueue = async () => {
   while (true) {
     const queueEntries = await db.queueEntry.findMany({
       orderBy: { joinedAt: "asc" },
-      include: {
-        app: {
-          select: {
-            id: true,
-            userId: true,
-            targetTesterCount: true,
-            fulfilledTesterCount: true,
-          },
-        },
-        user: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
-          },
-        },
-      },
+      include: QUEUE_ENTRY_INCLUDE,
     });
 
     if (queueEntries.length < MIN_MEMBERS) {
@@ -136,12 +138,12 @@ export const processQueue = async () => {
       return;
     }
 
-    await handleQueueReminders(queueEntries as QueueEntryWithRelations[]);
+    await handleQueueReminders(queueEntries);
 
     const firstEntry = queueEntries[0];
     const windowLimit = new Date(firstEntry.joinedAt.getTime() + MATCH_WINDOW_MS);
 
-    const selectedEntries: QueueEntryWithRelations[] = [];
+    const selectedEntries: QueueEntryWithApp[] = [];
     const usedUsers = new Set<string>();
 
     for (const entry of queueEntries) {
