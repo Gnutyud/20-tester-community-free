@@ -29,21 +29,31 @@ export const {
   },
   callbacks: {
     async redirect({ url, baseUrl }) {
-      // If the URL is our mobile callback endpoint, allow it
+      // If the URL is our mobile callback endpoint, always allow it
+      // This ensures that even if user is already logged in, they get redirected to mobile callback
       if (url.includes("/api/auth/mobile-callback")) {
-        return url;
+        return url.startsWith("http") ? url : `${baseUrl}${url}`;
       }
       // If the URL is a deep link, redirect to mobile callback instead
       // This prevents NextAuth from trying to use deep links as routes
       if (url.startsWith("20-tester-community://")) {
         return `${baseUrl}/api/auth/mobile-callback`;
       }
-      // Check if URL contains the mobile callback path (might be in query params)
+      // Check if URL contains the mobile callback path (might be in query params or as callbackUrl)
       try {
-        const urlObj = new URL(url, baseUrl);
-        if (urlObj.pathname.includes("/api/auth/mobile-callback") || 
-            urlObj.searchParams.get("callbackUrl")?.includes("/api/auth/mobile-callback")) {
-          return `${baseUrl}/api/auth/mobile-callback`;
+        const urlObj = url.startsWith("http") ? new URL(url) : new URL(url, baseUrl);
+        const callbackUrlParam = urlObj.searchParams.get("callbackUrl");
+        
+        // If callbackUrl parameter points to mobile callback, use it
+        if (callbackUrlParam?.includes("/api/auth/mobile-callback")) {
+          return callbackUrlParam.startsWith("http") 
+            ? callbackUrlParam 
+            : `${baseUrl}${callbackUrlParam}`;
+        }
+        
+        // If the pathname itself contains mobile callback
+        if (urlObj.pathname.includes("/api/auth/mobile-callback")) {
+          return url.startsWith("http") ? url : `${baseUrl}${url}`;
         }
       } catch {
         // If URL parsing fails, continue with default behavior
