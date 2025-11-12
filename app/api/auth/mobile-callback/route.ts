@@ -45,9 +45,21 @@ export async function GET(request: NextRequest) {
     // Encode the token data (in production, use a proper JWT or store in DB)
     const encodedToken = Buffer.from(JSON.stringify(tokenData)).toString("base64url");
 
-    // Redirect to mobile app deep link with token
-    // Next.js doesn't support redirecting to custom URL schemes directly,
-    // so we return an HTML page that redirects using JavaScript
+    // Check if this is a request from the mobile app (via fetch) or browser redirect
+    const userAgent = request.headers.get("user-agent") || "";
+    const isMobileApp = userAgent.includes("Expo") || request.headers.get("x-requested-with") === "mobile";
+    
+    // If it's a mobile app request, return JSON with the token
+    // Otherwise, return HTML that redirects to deep link
+    if (isMobileApp || request.headers.get("accept")?.includes("application/json")) {
+      return NextResponse.json({
+        success: true,
+        token: encodedToken,
+        deepLink: `20-tester-community://oauth/callback?token=${encodedToken}`,
+      });
+    }
+    
+    // For browser requests, return HTML that redirects to deep link
     const deepLinkUrl = `20-tester-community://oauth/callback?token=${encodedToken}`;
     
     const html = `
