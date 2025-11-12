@@ -28,6 +28,31 @@ export const {
     }
   },
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      // If the URL is our mobile callback endpoint, allow it
+      if (url.includes("/api/auth/mobile-callback")) {
+        return url;
+      }
+      // If the URL is a deep link, redirect to mobile callback instead
+      // This prevents NextAuth from trying to use deep links as routes
+      if (url.startsWith("20-tester-community://")) {
+        return `${baseUrl}/api/auth/mobile-callback`;
+      }
+      // Check if URL contains the mobile callback path (might be in query params)
+      try {
+        const urlObj = new URL(url, baseUrl);
+        if (urlObj.pathname.includes("/api/auth/mobile-callback") || 
+            urlObj.searchParams.get("callbackUrl")?.includes("/api/auth/mobile-callback")) {
+          return `${baseUrl}/api/auth/mobile-callback`;
+        }
+      } catch {
+        // If URL parsing fails, continue with default behavior
+      }
+      // Otherwise use the default behavior
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      if (new URL(url).origin === baseUrl) return url;
+      return baseUrl;
+    },
     async signIn({ user, account }) {
       // Allow OAuth without email verification
       if (account?.provider !== "credentials") return true;

@@ -16,13 +16,43 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
-    // Get the current session after OAuth completes
+    // Get the current session (could be from OAuth callback or already logged in)
+    // This endpoint can be called:
+    // 1. After OAuth completes (session will be set)
+    // 2. When user is already logged in (session already exists)
+    // 3. Directly from mobile app to check if user is logged in
     const session = await auth();
 
     if (!session || !session.user) {
-      // If no session, redirect to login with error
+      // If no session, check if this is a mobile app request
+      const isMobileApp = request.headers.get("accept")?.includes("application/json");
+      
+      if (isMobileApp) {
+        return NextResponse.json({
+          success: false,
+          error: "no_session",
+        }, { status: 401 });
+      }
+      
+      // For browser, redirect to login with error
       const errorUrl = "20-tester-community://oauth/callback?error=no_session";
-      return NextResponse.redirect(errorUrl);
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta http-equiv="refresh" content="0;url=${errorUrl}">
+            <script>window.location.href = "${errorUrl}";</script>
+          </head>
+          <body>
+            <p>No session found. Redirecting...</p>
+            <p><a href="${errorUrl}">Click here</a> if not redirected.</p>
+          </body>
+        </html>
+      `;
+      return new NextResponse(html, {
+        status: 200,
+        headers: { "Content-Type": "text/html" },
+      });
     }
 
     // Generate a temporary token for the mobile app
